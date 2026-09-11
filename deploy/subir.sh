@@ -19,7 +19,9 @@ AGORA="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "=== EngOps → $SERVIDOR ($COMMIT) ==="
 
 PACOTE="$(mktemp -d)/standalone.tgz"
-bash deploy/empacotar.sh "$PACOTE" | tail -1 >/dev/null
+LOG_EMPACOTAR="$(mktemp)"
+# Saída inteira num arquivo; se falhar, mostra o fim em vez de morrer calado.
+bash deploy/empacotar.sh "$PACOTE" > "$LOG_EMPACOTAR" 2>&1 || { echo "! empacotar falhou:"; tail -25 "$LOG_EMPACOTAR"; exit 1; }
 
 echo "▸ enviando"
 ssh "$SERVIDOR" "mkdir -p $PASTA/storage && [ -f $PASTA/.env ] || { echo '! falta $PASTA/.env (copie .env.example e preencha)'; exit 1; }"

@@ -28,8 +28,11 @@ tar --force-local -czf "$SAIDA" -C .next/standalone \
   --exclude='./tsconfig.tsbuildinfo' --exclude='./standalone.tgz' .
 
 echo "▸ conferindo o pacote"
-tar --force-local -tzf "$SAIDA" | grep -cE '^\./server\.js$' | grep -q 1
-if [ "$(tar --force-local -tzf "$SAIDA" | grep -cE '^[.]/([.]env|[.]git/|secrets/)')" != "0" ]; then echo "! segredo dentro do pacote"; exit 1; fi
-tar --force-local -tzf "$SAIDA" | grep -q '\.css$' || { echo "! sem CSS no pacote"; exit 1; }
+# Sem `grep -q` aqui: com pipefail, o grep fechando cedo derruba o tar com
+# SIGPIPE e o teste reprova um pacote bom. Contar é seguro.
+LISTA="$(tar --force-local -tzf "$SAIDA")"
+[ "$(printf '%s\n' "$LISTA" | grep -cE '^\./server\.js$')" = "1" ] || { echo "! sem server.js no pacote"; exit 1; }
+[ "$(printf '%s\n' "$LISTA" | grep -cE '^[.]/([.]env|[.]git/|secrets/)')" = "0" ] || { echo "! segredo dentro do pacote"; exit 1; }
+[ "$(printf '%s\n' "$LISTA" | grep -c '\.css$')" != "0" ] || { echo "! sem CSS no pacote"; exit 1; }
 echo "· $(du -h "$SAIDA" | cut -f1) em $SAIDA"
 echo "$SAIDA"
