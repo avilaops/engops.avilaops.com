@@ -23,13 +23,13 @@ mkdir -p .next/standalone/prisma
 cp -r prisma/schema.prisma prisma/migrations .next/standalone/prisma/
 
 SAIDA="${1:-$(mktemp -d)/standalone.tgz}"
-tar czf "$SAIDA" -C .next/standalone \
+tar --force-local -czf "$SAIDA" -C .next/standalone \
   --exclude='./.git' --exclude='./.env*' --exclude='./storage' --exclude='./tests' \
   --exclude='./tsconfig.tsbuildinfo' --exclude='./standalone.tgz' .
 
 echo "▸ conferindo o pacote"
-tar tzf "$SAIDA" | grep -cE '^\./server\.js$' | grep -q 1
-if [ "$(tar tzf "$SAIDA" | grep -cE '^[.]/([.]env|[.]git/|secrets/)')" != "0" ]; then echo "! segredo dentro do pacote"; exit 1; fi
-tar tzf "$SAIDA" | grep -q '\.css$' || { echo "! sem CSS no pacote"; exit 1; }
+tar --force-local -tzf "$SAIDA" | grep -cE '^\./server\.js$' | grep -q 1
+if [ "$(tar --force-local -tzf "$SAIDA" | grep -cE '^[.]/([.]env|[.]git/|secrets/)')" != "0" ]; then echo "! segredo dentro do pacote"; exit 1; fi
+tar --force-local -tzf "$SAIDA" | grep -q '\.css$' || { echo "! sem CSS no pacote"; exit 1; }
 echo "· $(du -h "$SAIDA" | cut -f1) em $SAIDA"
 echo "$SAIDA"
