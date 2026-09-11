@@ -114,9 +114,12 @@ export async function processar(job: Job): Promise<void> {
       await renovarLease(job.id);
 
       if (r.tipo === "pausar") {
+        // A etapa que pausou já fez o seu trabalho (gerou a prévia, pediu a
+        // aprovação). Retomar continua da PRÓXIMA, senão ela pediria outra
+        // aprovação a cada retomada.
         await prisma.job.update({
           where: { id: job.id },
-          data: { status: "WAITING_USER", etapaAtual: etapa, contexto: contexto as Prisma.InputJsonValue, travadoAte: null, travadoPor: null },
+          data: { status: "WAITING_USER", etapaAtual: etapa + 1, contexto: contexto as Prisma.InputJsonValue, travadoAte: null, travadoPor: null },
         });
         await registrar(`Pausado: ${r.motivo}`, "AVISO");
         await emitirEvento(job.empresaId, EVENTOS.AutomacaoPausada, { jobId: job.id, demandaId: job.demandaId, motivo: r.motivo });
