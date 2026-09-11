@@ -26,7 +26,7 @@ export function ssoBaseUrl(): string {
 }
 
 export function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://engops.avilaops.com";
+  return process.env.ENGOPS_SITE_URL || "https://engops.avilaops.com";
 }
 
 /** URL de login deste app no SSO, voltando para a tela pedida. */

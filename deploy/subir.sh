@@ -32,11 +32,13 @@ echo "▸ migração e subida"
 ssh "$SERVIDOR" "bash -s" <<REMOTO
 set -euo pipefail
 cd $PASTA
-# Migração pelo host (o container não tem o CLI do Prisma). A URL do .env usa
-# host.docker.internal; no host é 127.0.0.1.
-DBURL=\$(grep ^DATABASE_URL= .env | cut -d= -f2- | sed 's/host.docker.internal/127.0.0.1/')
+# Migração num container node descartável: o host não tem node e a imagem de
+# runtime não tem o CLI do Prisma. Rede bridge para alcançar o Postgres do
+# host pelo mesmo host.docker.internal do .env. Falha aqui aborta o deploy.
 rm -rf prisma && mkdir prisma && tar xzf standalone.tgz -C prisma --strip-components=2 ./prisma
-DATABASE_URL="\$DBURL" npx -y prisma@6 migrate deploy --schema prisma/schema.prisma 2>&1 | grep -E "applied|No pending|rror|migration" || true
+docker run --rm --network bridge --add-host host.docker.internal:host-gateway \
+  -v /opt/engops/prisma:/prisma -e DATABASE_URL="\$(grep ^DATABASE_URL= .env | cut -d= -f2-)" \
+  node:22-bookworm-slim sh -c "apt-get update -qq >/dev/null && apt-get install -y -qq openssl ca-certificates >/dev/null && npx -y prisma@6 migrate deploy --schema /prisma/schema.prisma" 2>&1 | grep -vE "^\s*$" | tail -6
 GIT_SHA=$COMMIT BUILT_AT=$AGORA docker compose build -q
 docker compose up -d --force-recreate
 docker image prune -f >/dev/null

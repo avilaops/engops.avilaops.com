@@ -25,5 +25,5 @@ export async function POST(req: NextRequest) {
   const dados = esquemaDemanda.safeParse(resto);
   if (!dados.success) return NextResponse.json({ erro: "dados inválidos", detalhes: dados.error.issues }, { status: 422 });
   const d = await criarDemanda(e.id, `servico:${typeof origem === "string" ? origem : "desconhecido"}`, dados.data);
-  return NextResponse.json({ id: d.id, codigo: d.codigo, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/demandas/${d.id}` }, { status: 201 });
+  return NextResponse.json({ id: d.id, codigo: d.codigo, url: `${process.env.ENGOPS_SITE_URL ?? ""}/demandas/${d.id}` }, { status: 201 });
 }

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { scriptInicial } from "@/lib/tema-noturno";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://engops.avilaops.com";
+const siteUrl = process.env.ENGOPS_SITE_URL || "https://engops.avilaops.com";
 
 export const viewport: Viewport = {
   width: "device-width",
