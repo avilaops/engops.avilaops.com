@@ -29,7 +29,7 @@ export default function DemandTable({ demandas }: { demandas: DemandaLista[] }) 
             <strong>{[d.endereco, d.numero].filter(Boolean).join(", ") || "Endereço não informado"}</strong>
             <small>{[d.municipio, d.uf].filter(Boolean).join("/")}{d.municipio ? " · " : ""}{nomeDoTipo(d.tipoServico)}</small>
           </span>
-          <span className="titulo sinais-wrap">
+          <span className="titulo prop">
             <strong>{d.proprietarioNome ?? "—"}</strong>
             <small>{d.cliente?.nome ?? ""}</small>
           </span>

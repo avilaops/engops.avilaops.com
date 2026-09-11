@@ -31,7 +31,13 @@ export default async function EditarDemanda({ params }: { params: Promise<{ id: 
         <div className="page-actions"><Link href={`/demandas/${d.id}`} className="secondary-button">Voltar à demanda</Link></div>
       </div>
       <section className="panel" style={{ maxWidth: 900 }}>
-        <DemandaForm acao={acao} demanda={d} membros={membros} clientes={clientes} rotuloBotao="Salvar alterações" />
+        <DemandaForm
+          acao={acao}
+          demanda={{ ...d, areaM2: d.areaM2 === null ? null : Number(d.areaM2), valorAvaliacao: d.valorAvaliacao === null ? null : Number(d.valorAvaliacao) }}
+          membros={membros}
+          clientes={clientes}
+          rotuloBotao="Salvar alterações"
+        />
       </section>
     </AppShell>
   );

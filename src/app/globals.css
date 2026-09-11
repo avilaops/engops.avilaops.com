@@ -364,10 +364,12 @@ kbd { font-family: var(--mono); font-size: 0.7rem; border: 1px solid var(--line)
   .kv { grid-template-columns: 1fr; gap: 2px; }
   .kv dt { margin-top: 8px; }
   .search { min-width: 0; width: 100%; }
-  .demand-row { grid-template-columns: 1fr auto; grid-template-areas: "codigo prazo" "titulo titulo" "sinais status"; gap: 4px 10px; }
+  .demand-row { grid-template-columns: 1fr auto; grid-template-areas: "codigo prazo" "titulo titulo" "prop prop" "sinais status"; gap: 4px 10px; }
   .demand-row.head { display: none; }
   .demand-row .codigo { grid-area: codigo; }
   .demand-row .titulo { grid-area: titulo; }
+  .demand-row .titulo.prop { grid-area: prop; }
+  .demand-row .titulo.prop strong { font-weight: 400; color: var(--muted); }
   .demand-row .prazo { grid-area: prazo; text-align: right; }
   .demand-row .status { grid-area: status; justify-self: end; }
   .demand-row .sinais { grid-area: sinais; }

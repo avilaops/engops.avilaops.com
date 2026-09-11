@@ -5,9 +5,12 @@ import type { Demanda } from "@prisma/client";
 import { PRIORIDADES, TIPOS_SERVICO, UFS } from "@/dominio/demandas";
 import type { EstadoAcao } from "@/app/acoes/demandas";
 
+/** Decimal do Prisma não atravessa a fronteira servidor → cliente: a página converte para número antes. */
+export type DemandaParaForm = Omit<Partial<Demanda>, "areaM2" | "valorAvaliacao"> & { areaM2?: number | null; valorAvaliacao?: number | null };
+
 type Props = {
   acao: (estado: EstadoAcao, form: FormData) => Promise<EstadoAcao>;
-  demanda?: Partial<Demanda> | null;
+  demanda?: DemandaParaForm | null;
   membros: Array<{ id: string; nome: string }>;
   clientes: Array<{ id: string; nome: string }>;
   rotuloBotao: string;
