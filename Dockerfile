@@ -3,7 +3,7 @@
 # Fluxo completo em deploy/subir.sh e no README.
 FROM node:22-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
-ENV NODE_ENV=production PORT=3120 HOSTNAME=0.0.0.0 \
+ENV NODE_ENV=production PORT=3130 HOSTNAME=0.0.0.0 \
     PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 WORKDIR /app
 ADD standalone.tgz /app/
@@ -20,5 +20,5 @@ RUN set -e; cd /app/node_modules; \
 ARG GIT_SHA=dev
 ARG BUILT_AT=
 ENV GIT_SHA=$GIT_SHA BUILT_AT=$BUILT_AT
-EXPOSE 3120
+EXPOSE 3130
 CMD ["node", "server.js"]

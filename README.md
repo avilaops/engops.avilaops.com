@@ -27,7 +27,7 @@ Origem e decisões: [docs/produtos/CAIXA-OPS.md](../docs/produtos/CAIXA-OPS.md) 
 cp .env.example .env         # preencher DATABASE_URL, SSO_JWT_SECRET (ou ENGOPS_DEV_EMAIL em dev)
 npm install
 npm run prisma:migrate       # ou prisma:dev
-npm run dev                  # http://localhost:3120
+npm run dev                  # http://localhost:3130
 npm run conferir             # typecheck + lint + dados falsos + testes
 ```
 
@@ -38,7 +38,7 @@ fila agora".
 ## Deploy
 
 `bash deploy/subir.sh`. Servidor `apps-noclient`, pasta `/opt/engops`, porta
-3120, Postgres 18 do host (banco `engops`), Caddy em `deploy/Caddyfile.snippet`.
+3130, Postgres 18 do host (banco `engops`), Caddy em `deploy/Caddyfile.snippet`.
 Registro no SSO: `auth.avilaops.com/src/lib/apps.ts` (id `engops`).
 
 ## Documentação

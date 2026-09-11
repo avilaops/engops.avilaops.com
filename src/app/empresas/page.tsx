@@ -53,9 +53,10 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
         </section>
       ) : null}
 
-      <p className="subtle" style={{ marginTop: 20 }}>
-        Logado como {email}. <form action="/api/auth/logout" method="post" style={{ display: "inline" }}><button type="submit" className="text-button" style={{ padding: 0 }}>Sair</button></form>
-      </p>
+      <div className="subtle" style={{ marginTop: 20, display: "flex", gap: 6, alignItems: "center" }}>
+        <span>Logado como {email}.</span>
+        <form action="/api/auth/logout" method="post"><button type="submit" className="text-button" style={{ padding: 0 }}>Sair</button></form>
+      </div>
     </main>
   );
 }

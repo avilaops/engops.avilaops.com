@@ -126,7 +126,7 @@ export const prepararSimil: Workflow = {
           }));
         amb.contexto.aprovacaoId = aprovacao.id;
 
-        await mudarStatus(amb.demandaId!, amb.empresaId, "SIMIL_PENDENTE", "motor", "automação");
+        await mudarStatus(amb.demandaId!, amb.empresaId, "SIMIL_PENDENTE", "motor", "automacao");
         await emitirEvento(amb.empresaId, EVENTOS.SIMILPreparado, { demandaId: amb.demandaId, jobId: amb.jobId, execucaoId: execucao.id, modo: amb.modo, resumo });
         await emitirEvento(amb.empresaId, EVENTOS.AprovacaoSolicitada, { demandaId: amb.demandaId, aprovacaoId: aprovacao.id, tipo: aprovacao.tipo });
         await amb.registrar(amb.modo === "SOMBRA" ? "Prévia gerada em modo sombra. Aguardando o operador confirmar a execução manual." : "Prévia gerada. Aguardando aprovação para executar.");
@@ -141,7 +141,7 @@ export const prepararSimil: Workflow = {
         if (aprovacao.status === "PENDENTE") return { tipo: "pausar", motivo: "aguardando aprovação" };
         if (aprovacao.status === "REJEITADA") {
           await prisma.execucaoExterna.update({ where: { id: amb.contexto.execucaoId as string }, data: { status: "CANCELADA", terminadoEm: new Date(), erroCodigo: "APPROVAL_REJECTED", erroMensagem: aprovacao.motivo } });
-          await mudarStatus(amb.demandaId!, amb.empresaId, "EM_PREPARACAO", "motor", "automação");
+          await mudarStatus(amb.demandaId!, amb.empresaId, "EM_PREPARACAO", "motor", "automacao");
           throw new ErroAutomacao("APPROVAL_REJECTED", aprovacao.motivo ?? "Recusado na aprovação", { retentavel: false });
         }
 
@@ -174,7 +174,7 @@ export const prepararSimil: Workflow = {
           }
         }
 
-        await mudarStatus(amb.demandaId!, amb.empresaId, "SIMIL_CONCLUIDO", "motor", "automação");
+        await mudarStatus(amb.demandaId!, amb.empresaId, "SIMIL_CONCLUIDO", "motor", "automacao");
         await auditar({ empresaId: amb.empresaId, usuario: aprovacao.decididaPor ?? "motor", acao: "simil.concluido", objetoTipo: "Demanda", objetoId: amb.demandaId!, origem: "automacao", metadados: { jobId: amb.jobId, modo: amb.modo } });
         await emitirEvento(amb.empresaId, EVENTOS.SIMILConcluido, { demandaId: amb.demandaId, jobId: amb.jobId, execucaoId, modo: amb.modo });
         await revalidarDemanda(amb.demandaId!);

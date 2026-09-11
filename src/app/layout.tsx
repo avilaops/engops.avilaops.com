@@ -32,7 +32,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" data-theme="light" style={{ colorScheme: "light" }}>
+    // O script do <head> troca data-theme antes do React montar: o aviso de hidratação aqui é esperado.
+    <html lang="pt-BR" data-theme="light" style={{ colorScheme: "light" }} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: scriptInicial() }} />
       </head>

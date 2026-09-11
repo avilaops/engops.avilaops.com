@@ -64,5 +64,5 @@ Ver [ECOSSISTEMA-AVILA-OPS.md](ECOSSISTEMA-AVILA-OPS.md),
 ## Deploy
 
 Build standalone na máquina de desenvolvimento, `standalone.tgz` para
-`/opt/engops` no `apps-noclient`, imagem de runtime, porta 3120 em loopback,
+`/opt/engops` no `apps-noclient`, imagem de runtime, porta 3130 em loopback,
 Caddy na frente, Postgres 18 do host. Scripts em `deploy/`.

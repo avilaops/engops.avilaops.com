@@ -80,11 +80,16 @@ export async function atualizarDemanda(id: string, empresaId: string, usuario: s
   return depois;
 }
 
+/**
+ * Muda o estado. Pessoa só anda pelas transições permitidas; o motor de
+ * automação passa `origem: "automacao"` e pode saltar (uma demanda NOVA cujo
+ * SIMIL foi preparado vai direto a SIMIL_PENDENTE: o motor sabe o que fez).
+ */
 export async function mudarStatus(id: string, empresaId: string, para: StatusDemanda, usuario: string, origem = "ui") {
   const d = await prisma.demanda.findFirst({ where: { id, empresaId } });
   if (!d) throw new Error("Demanda não encontrada");
   if (d.status === para) return d;
-  if (!podeTransitar(d.status, para)) throw new Error(`Não dá para ir de ${d.status} para ${para}`);
+  if (origem !== "automacao" && !podeTransitar(d.status, para)) throw new Error(`Não dá para ir de ${d.status} para ${para}`);
   const atualizado = await prisma.$transaction(async (tx) => {
     const x = await tx.demanda.update({
       where: { id },

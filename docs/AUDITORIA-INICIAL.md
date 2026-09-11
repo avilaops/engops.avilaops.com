@@ -27,7 +27,7 @@ do monorepo.
 | Tema | `packages/tema-noturno` (18h escurece, 6h clareia), vendorizado por `sincronizar.mjs`. | Em produção. | **Reutilizado.** `engops/src/lib/tema-noturno` entrou na lista do sincronizador. |
 | Design system | Não existe pacote. `app.avilaops.com/globals.css` (6.884 linhas) e `docs/auditoria-mobile-ios.md` são o padrão de fato. | Padrão iOS só no app. | **Mesmos tokens e componentes** (`AppShell`, `MobileNav`, `Sheet`, `Segmented`, `.ios-list`, `.field`) reescritos enxutos em `globals.css` (400 linhas). |
 | Scaffold | `packages/create-avilaops` gera Next 16 + Dockerfile de runtime + compose em bridge + Caddy snippet. | Funciona, mas sem auth, sem tema, sem shell. | **Seguido à mão** (mesmo molde) porque o destino é `engops/`, não `<dominio>/`. |
-| Deploy | Build standalone local → `standalone.tgz` → imagem de runtime no Hetzner. Servidor `apps-noclient` (204.168.249.111) recebe o que não é de cliente; Postgres 18 do host em `172.17.0.1`. | Padrão validado em lojas, app e CRM. | **Igual.** `deploy/empacotar.sh` + `deploy/subir.sh`, porta 3120, banco `engops`. |
+| Deploy | Build standalone local → `standalone.tgz` → imagem de runtime no Hetzner. Servidor `apps-noclient` (204.168.249.111) recebe o que não é de cliente; Postgres 18 do host em `172.17.0.1`. | Padrão validado em lojas, app e CRM. | **Igual.** `deploy/empacotar.sh` + `deploy/subir.sh`, porta 3130, banco `engops`. |
 | Cobrança | Mercado Pago só; `packages/checkout`. | Em produção. | Fora do escopo desta fase. |
 
 ## 3. Lacunas encontradas

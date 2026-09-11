@@ -42,7 +42,7 @@ REMOTO
 
 echo "▸ conferindo"
 for i in $(seq 1 25); do
-  SAUDE=$(ssh "$SERVIDOR" "curl -sf -m 5 http://127.0.0.1:3120/api/health" 2>/dev/null || true)
+  SAUDE=$(ssh "$SERVIDOR" "curl -sf -m 5 http://127.0.0.1:3130/api/health" 2>/dev/null || true)
   if echo "$SAUDE" | grep -q "\"commit\":\"$COMMIT\""; then echo "· no ar: $SAUDE"; exit 0; fi
   sleep 3
 done
