@@ -1,0 +1,21 @@
+services:
+  engops:
+    build:
+      context: .
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
+        BUILT_AT: ${BUILT_AT:-}
+    image: engops:latest
+    container_name: engops
+    restart: always
+    # Rede bridge padrão (docker0): é por ela que o Postgres do host escuta (172.17.0.1).
+    network_mode: bridge
+    env_file: [.env]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    ports: ["127.0.0.1:3130:3130"]
+    volumes: ["./storage:/app/storage"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3130/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -1,0 +1,35 @@
+# syntax=docker/dockerfile:1
+# Imagem construída no CI (GitHub Actions ou apps-noclient).
+#
+# O `Dockerfile` da raiz é a imagem de runtime do caminho manual: recebe o
+# `standalone.tgz` montado na máquina de desenvolvimento por deploy/empacotar.sh.
+# Este faz o build dentro da própria imagem, que é o que o workflow
+# compartilhado do avilaops/infra precisa. Os passos de montagem são os mesmos
+# do empacotar.sh: standalone + .next/static + public + prisma.
+FROM node:22-bookworm-slim AS build
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:22-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production PORT=3130 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 \
+    PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
+WORKDIR /app
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
+# O rastreamento do Next não alcança o engine nativo do Prisma.
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=build /app/prisma ./prisma
+ARG GIT_SHA=dev
+ARG BUILT_AT=
+ENV GIT_SHA=$GIT_SHA BUILT_AT=$BUILT_AT
+EXPOSE 3130
+CMD ["node", "server.js"]

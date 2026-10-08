@@ -1,0 +1,543 @@
+// EngOps: sistema operacional das demandas Caixa.
+//
+// Toda tabela de negócio carrega `empresaId`: é o isolamento entre empresas
+// (tenant). Nenhuma consulta de tela sai sem esse filtro, e é o Prisma
+// estendido em `src/lib/tenant.ts` que garante isso, não a boa vontade de cada
+// rota.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Empresa e pessoas
+// ---------------------------------------------------------------------------
+
+/// Modo de automação externa da empresa. Toda empresa nasce em SOMBRA: o motor
+/// prepara tudo e mostra, mas não envia a sistema externo. REAL só depois de
+/// execuções validadas, ligado à mão por quem administra.
+enum ModoAutomacao {
+  SOMBRA
+  REAL
+}
+
+model Empresa {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  nome          String
+  cnpj          String?
+  ativo         Boolean       @default(true)
+  modoAutomacao ModoAutomacao @default(SOMBRA)
+  /// Próximo número sequencial de demanda desta empresa (ENG-0001, ENG-0002...).
+  proximoCodigo Int           @default(1)
+  criadoEm      DateTime      @default(now())
+  atualizadoEm  DateTime      @updatedAt
+
+  membros     Membro[]
+  clientes    Cliente[]
+  demandas    Demanda[]
+  documentos  Documento[]
+  pendencias  Pendencia[]
+  jobs        Job[]
+  aprovacoes  Aprovacao[]
+  auditorias  Auditoria[]
+  eventos     EventoDominio[]
+  notificacoes Notificacao[]
+
+  @@map("empresas")
+}
+
+/// Papéis dentro de uma empresa. São o RBAC do produto; o SSO só diz quem a
+/// pessoa é. ADMIN administra a empresa; GESTOR aprova e vê tudo; OPERADOR
+/// prepara e executa; REVISOR confere; CONSULTA só lê.
+enum PapelMembro {
+  ADMIN
+  GESTOR
+  OPERADOR
+  REVISOR
+  CONSULTA
+}
+
+model Membro {
+  id        String      @id @default(cuid())
+  empresaId String
+  email     String
+  nome      String
+  papel     PapelMembro @default(OPERADOR)
+  ativo     Boolean     @default(true)
+  criadoEm  DateTime    @default(now())
+  ultimoAcessoEm DateTime?
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id])
+  demandas Demanda[] @relation("responsavel")
+
+  @@unique([empresaId, email])
+  @@index([email])
+  @@map("membros")
+}
+
+/// Quem contrata o serviço da empresa (agência, correspondente, construtora,
+/// pessoa física). Não é o proprietário do imóvel.
+model Cliente {
+  id        String   @id @default(cuid())
+  empresaId String
+  nome      String
+  documento String?
+  email     String?
+  telefone  String?
+  criadoEm  DateTime @default(now())
+
+  empresa  Empresa   @relation(fields: [empresaId], references: [id])
+  demandas Demanda[]
+
+  @@index([empresaId, nome])
+  @@map("clientes")
+}
+
+// ---------------------------------------------------------------------------
+// Demanda (a Ordem de Serviço e sua jornada)
+// ---------------------------------------------------------------------------
+
+enum TipoServico {
+  AVALIACAO_IMOVEL
+  ACOMPANHAMENTO_OBRA
+  VISTORIA
+  LAUDO_TECNICO
+  OUTRO
+}
+
+enum StatusDemanda {
+  NOVA
+  EM_PREPARACAO
+  AGUARDANDO_DOCUMENTOS
+  PRONTA_PARA_PROCESSAMENTO
+  EM_PROCESSAMENTO
+  SIMIL_PENDENTE
+  SIMIL_CONCLUIDO
+  RAE_PENDENTE
+  RAE_CONCLUIDO
+  SIOPI_PENDENTE
+  EM_CONFERENCIA
+  COM_DIVERGENCIA
+  PRONTA_PARA_ENTREGA
+  ENTREGUE
+  ARQUIVADA
+  ERRO
+}
+
+enum Prioridade {
+  BAIXA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+model Demanda {
+  id            String        @id @default(cuid())
+  empresaId     String
+  /// ENG-0001. Sequencial por empresa, legível, é o que a equipe fala.
+  codigo        String
+  numeroOs      String?
+  tipoServico   TipoServico   @default(AVALIACAO_IMOVEL)
+  status        StatusDemanda @default(NOVA)
+  prioridade    Prioridade    @default(NORMAL)
+  clienteId     String?
+  responsavelId String?
+  dataEntrada   DateTime      @default(now())
+  prazo         DateTime?
+  observacoes   String?
+
+  // Imóvel
+  endereco     String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  municipio    String?
+  uf           String?
+  cep          String?
+  matricula    String?
+  cartorio     String?
+  areaM2       Decimal?      @db.Decimal(12, 2)
+  tipoImovel   String?
+
+  // Proprietário
+  proprietarioNome String?
+  proprietarioDoc  String?
+
+  // Valores e datas do serviço
+  valorAvaliacao Decimal? @db.Decimal(14, 2)
+  dataVistoria   DateTime?
+
+  arquivadaEm  DateTime?
+  entregueEm   DateTime?
+  criadoPor    String
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  empresa     Empresa     @relation(fields: [empresaId], references: [id])
+  cliente     Cliente?    @relation(fields: [clienteId], references: [id])
+  responsavel Membro?     @relation("responsavel", fields: [responsavelId], references: [id])
+  documentos  Documento[]
+  checklist   ItemChecklist[]
+  pendencias  Pendencia[]
+  jobs        Job[]
+  aprovacoes  Aprovacao[]
+  execucoes   ExecucaoExterna[]
+
+  @@unique([empresaId, codigo])
+  @@index([empresaId, status])
+  @@index([empresaId, prazo])
+  @@index([empresaId, responsavelId])
+  @@index([empresaId, numeroOs])
+  @@map("demandas")
+}
+
+// ---------------------------------------------------------------------------
+// Documentos
+// ---------------------------------------------------------------------------
+
+/// As pastas do dossiê: /01-Entrada ... /09-Auditoria.
+enum CategoriaDocumento {
+  ENTRADA
+  IMOVEL
+  PROPRIETARIO
+  LAUDOS
+  SIMIL
+  RAE
+  SIOPI
+  ENTREGA
+  AUDITORIA
+}
+
+enum OrigemDocumento {
+  UPLOAD
+  PORTAL
+  AUTOMACAO
+  EMAIL
+  IMPORTACAO
+}
+
+model Documento {
+  id           String             @id @default(cuid())
+  empresaId    String
+  demandaId    String
+  categoria    CategoriaDocumento
+  /// Tipo reconhecido: OS, MATRICULA, RG, CPF, CNH, LAUDO, ART, FOTO, RAE, OUTRO...
+  tipo         String
+  nomeOriginal String
+  /// Nome padronizado que o sistema deu (ENG-0001_02-Imovel_MATRICULA_v1.pdf).
+  nomeArquivo  String
+  /// Chave no storage (R2) ou `local:` em desenvolvimento.
+  chave        String
+  mime         String
+  tamanho      Int
+  hash         String
+  versao       Int                @default(1)
+  origem       OrigemDocumento    @default(UPLOAD)
+  enviadoPor   String
+  /// Dados conferidos neste documento (matrícula, área, nome, CPF...). Hoje
+  /// quem preenche é o operador ao conferir; amanhã, a extração automática.
+  /// É daqui que o validador cruzado compara documento com cadastro.
+  dados        Json?
+  /// Documento que esta versão substitui.
+  substituiId  String?
+  removidoEm   DateTime?
+  criadoEm     DateTime           @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  demanda Demanda @relation(fields: [demandaId], references: [id])
+
+  @@index([demandaId, categoria])
+  @@index([empresaId, hash])
+  @@map("documentos")
+}
+
+// ---------------------------------------------------------------------------
+// Checklist e pendências
+// ---------------------------------------------------------------------------
+
+enum GrupoChecklist {
+  DOCUMENTOS
+  DADOS
+  SIMIL
+  RAE
+  SIOPI
+  ENTREGA
+}
+
+enum EstadoItem {
+  PENDENTE
+  OK
+  REVISAR
+  BLOQUEADO
+}
+
+model ItemChecklist {
+  id           String         @id @default(cuid())
+  demandaId    String
+  grupo        GrupoChecklist
+  chave        String
+  rotulo       String
+  estado       EstadoItem     @default(PENDENTE)
+  ordem        Int
+  detalhe      String?
+  atualizadoEm DateTime       @updatedAt
+
+  demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+
+  @@unique([demandaId, chave])
+  @@map("itens_checklist")
+}
+
+enum Severidade {
+  BLOQUEIA
+  AVISO
+}
+
+enum OrigemPendencia {
+  DETECTOR
+  CRUZADO
+  AUTOMACAO
+  MANUAL
+}
+
+/// Um problema identificado antes (ou durante) a automação. Bloqueia ou avisa.
+model Pendencia {
+  id          String          @id @default(cuid())
+  empresaId   String
+  demandaId   String
+  codigo      String
+  severidade  Severidade
+  titulo      String
+  detalhe     String?
+  campo       String?
+  origem      OrigemPendencia @default(DETECTOR)
+  resolvidaEm DateTime?
+  resolvidaPor String?
+  criadoEm    DateTime        @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+
+  @@index([demandaId, resolvidaEm])
+  @@index([empresaId, resolvidaEm])
+  @@map("pendencias")
+}
+
+// ---------------------------------------------------------------------------
+// Motor de automação
+// ---------------------------------------------------------------------------
+
+enum StatusJob {
+  QUEUED
+  RUNNING
+  WAITING_USER
+  RETRYING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+model Job {
+  id                String     @id @default(cuid())
+  empresaId         String
+  demandaId         String?
+  workflow          String
+  status            StatusJob  @default(QUEUED)
+  modo              ModoAutomacao @default(SOMBRA)
+  prioridade        Int        @default(5)
+  /// Índice da etapa atual (0-based). Retomar continua daqui, não do zero.
+  etapaAtual        Int        @default(0)
+  totalEtapas       Int
+  tentativas        Int        @default(0)
+  maxTentativas     Int        @default(3)
+  /// Uma por intenção: clicar duas vezes em "Preparar SIMIL" acha o mesmo job.
+  chaveIdempotencia String     @unique
+  agendadoPara      DateTime   @default(now())
+  /// Lease do worker. Job com lease vencido e RUNNING é retomado por outro worker.
+  travadoAte        DateTime?
+  travadoPor        String?
+  iniciadoEm        DateTime?
+  terminadoEm       DateTime?
+  erroCodigo        String?
+  erroMensagem      String?
+  /// Estado que passa de etapa em etapa (dados preparados, ids, protocolos).
+  contexto          Json       @default("{}")
+  resultado         Json?
+  criadoPor         String
+  criadoEm          DateTime   @default(now())
+  atualizadoEm      DateTime   @updatedAt
+
+  empresa   Empresa      @relation(fields: [empresaId], references: [id])
+  demanda   Demanda?     @relation(fields: [demandaId], references: [id])
+  eventos   EventoJob[]
+  aprovacao Aprovacao[]
+  execucoes ExecucaoExterna[]
+
+  @@index([status, agendadoPara, prioridade])
+  @@index([empresaId, status])
+  @@index([demandaId])
+  @@map("jobs")
+}
+
+enum NivelEvento {
+  INFO
+  AVISO
+  ERRO
+}
+
+/// A timeline de uma execução: "14:31:06 28 campos validados".
+model EventoJob {
+  id       String      @id @default(cuid())
+  jobId    String
+  etapa    String
+  nivel    NivelEvento @default(INFO)
+  mensagem String
+  dados    Json?
+  criadoEm DateTime    @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, criadoEm])
+  @@map("eventos_job")
+}
+
+enum SistemaExterno {
+  SIMIL
+  RAE
+  SIOPI
+}
+
+enum StatusExecucao {
+  PREPARADA
+  AGUARDANDO_APROVACAO
+  EXECUTANDO
+  CONCLUIDA
+  FALHOU
+  CANCELADA
+}
+
+/// Cada passagem por SIMIL, RAE ou SIOPI, com evidência. Em modo SOMBRA a
+/// execução para em PREPARADA e o operador compara com o manual.
+model ExecucaoExterna {
+  id          String         @id @default(cuid())
+  demandaId   String
+  jobId       String?
+  sistema     SistemaExterno
+  modo        ModoAutomacao
+  status      StatusExecucao @default(PREPARADA)
+  /// Campos preparados, exatamente como iriam para o sistema.
+  dados       Json
+  protocolo   String?
+  evidencias  Json?
+  erroCodigo  String?
+  erroMensagem String?
+  executadoPor String?
+  iniciadoEm  DateTime       @default(now())
+  terminadoEm DateTime?
+
+  demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+  job     Job?    @relation(fields: [jobId], references: [id])
+
+  @@index([demandaId, sistema])
+  @@map("execucoes_externas")
+}
+
+// ---------------------------------------------------------------------------
+// Aprovação humana
+// ---------------------------------------------------------------------------
+
+enum StatusAprovacao {
+  PENDENTE
+  APROVADA
+  REJEITADA
+}
+
+model Aprovacao {
+  id           String          @id @default(cuid())
+  empresaId    String
+  demandaId    String
+  jobId        String?
+  tipo         String
+  status       StatusAprovacao @default(PENDENTE)
+  /// O que está sendo aprovado, em resumo: campos, contagens, pendências.
+  resumo       Json
+  solicitadaPor String
+  solicitadaEm DateTime        @default(now())
+  decididaPor  String?
+  decididaEm   DateTime?
+  motivo       String?
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+  job     Job?    @relation(fields: [jobId], references: [id])
+
+  @@index([empresaId, status])
+  @@index([demandaId, status])
+  @@map("aprovacoes")
+}
+
+// ---------------------------------------------------------------------------
+// Auditoria, eventos e notificações
+// ---------------------------------------------------------------------------
+
+model Auditoria {
+  id         String   @id @default(cuid())
+  empresaId  String
+  usuario    String
+  acao       String
+  objetoTipo String
+  objetoId   String
+  antes      Json?
+  depois     Json?
+  origem     String   @default("ui")
+  metadados  Json?
+  criadoEm   DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId, criadoEm])
+  @@index([objetoTipo, objetoId])
+  @@map("auditoria")
+}
+
+/// Outbox de eventos de domínio. Quem consome (n8n, CRM, mensageria) lê daqui;
+/// o código de negócio só grava. Gravar na mesma transação do fato evita evento
+/// sem fato e fato sem evento.
+model EventoDominio {
+  id         String    @id @default(cuid())
+  empresaId  String
+  nome       String
+  payload    Json
+  criadoEm   DateTime  @default(now())
+  entregueEm DateTime?
+  tentativas Int       @default(0)
+  erro       String?
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@index([entregueEm, criadoEm])
+  @@map("eventos_dominio")
+}
+
+model Notificacao {
+  id           String    @id @default(cuid())
+  empresaId    String
+  destinatario String
+  titulo       String
+  corpo        String?
+  link         String?
+  lidaEm       DateTime?
+  criadoEm     DateTime  @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@index([destinatario, lidaEm])
+  @@map("notificacoes")
+}

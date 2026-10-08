@@ -1,0 +1,47 @@
+{
+  "name": "engops",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3130",
+    "build": "prisma generate && next build",
+    "start": "next start -p 3130",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dados-falsos": "node scripts/verificar-dados-falsos.mjs",
+    "conferir": "npm run typecheck && npm run lint && npm run dados-falsos && npm run test",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:dev": "prisma migrate dev",
+    "empacotar": "bash deploy/empacotar.sh",
+    "subir": "bash deploy/subir.sh"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1105.0",
+    "@aws-sdk/s3-request-presigner": "^3.1105.0",
+    "@prisma/client": "6.19.3",
+    "jsonwebtoken": "^9.0.2",
+    "next": "16.2.11",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.11",
+    "prisma": "6.19.3",
+    "tailwindcss": "^4",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "allowScripts": {}
+}
