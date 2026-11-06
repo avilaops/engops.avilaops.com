@@ -1,6 +1,6 @@
 # Roadmap
 
-Estado em 11/09/2026. ✓ feito, ◐ parcial, ○ não iniciado.
+Estado em 06/11/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 
 ## Fase 0: investigação ✓
 
@@ -56,7 +56,7 @@ Estado em 11/09/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 
 - Seleção múltipla, pré-checagem ("37 selecionadas, 34 prontas, 3 com pendência"), enfileirar só as prontas, bloqueio por healthcheck.
 
-## Fase 9: dashboards e notificações ○
+## Fase 9: dashboards e notificações ◐
 
 - Feito parcialmente: `/relatorios` com indicadores e funil contados no banco.
 - Falta: exportação CSV/XLSX/PDF, tempo economizado, notificações in-app, `PrazoEmRisco` agendado, mensagens por n8n.
@@ -69,15 +69,45 @@ Estado em 11/09/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 
 - Rate limiting, CSRF nas rotas de API, políticas de retenção, testes E2E com Playwright, ambiente de simulação (fixtures de SIMIL sucesso, campo alterado, SIOPI timeout, sessão expirada, RAE inválido, documento ausente, divergente), feature flags além do modo sombra.
 
+## Fase 12: operação de serviços da Silveira Cruz ○
+
+Objetivo: usar a base do EngOps para controlar os serviços de engenharia prestados a Caixa, SESI, FNDE e outros contratantes, mantendo fluxos e documentos específicos por tipo de serviço.
+
+- Mapear com a equipe o processo real de cada contratante: etapas da OS, dados exigidos, prazos, critérios de conclusão e responsáveis.
+- Receber e revisar os materiais do SESI mencionados pelo Wiliam (planilha, informações solicitadas e recomendações); converter os requisitos confirmados em campos, validações, checklist e modelos de relatório.
+- Confirmar os requisitos do FNDE com exemplos reais de vistoria, fotos, registros e entrega. Validar a sigla e o nome do sistema citados na transcrição antes de codificar.
+- Definir um catálogo de tipos de serviço e seus fluxos sem misturar as regras próprias de Caixa, SESI e FNDE.
+- Completar o cadastro do cliente/contratante e relacioná-lo à OS, ao programa/contrato, à unidade atendida e ao contato, conforme os dados que cada operação realmente exigir.
+- Definir a ficha da OS/vistoria: número externo, serviço, local, datas, prazo de atendimento e conclusão, responsável gerencial, executor/estagiário, prioridade, situação e histórico de alterações.
+- Permitir atribuir uma demanda a um integrante da equipe e manter visão gerencial das demandas, prazos, responsáveis e pendências.
+- Definir checklists e documentos obrigatórios por tipo de serviço; registrar vistorias, recomendações, fotos e anexos no dossiê da OS com autoria e data.
+- Implementar geração e conferência dos relatórios exigidos por cada contratante, com exportação no formato acordado e vínculo da versão entregue ao dossiê.
+- Validar permissões para equipe gerencial, operadores/estagiários, revisores e consulta; restringir ações e dados segundo o papel já existente.
+- Adicionar filtros e indicadores para contratante, tipo de serviço, situação, responsável e prazo; destacar prazos em risco e vencidos.
+- Integrar notificações e eventos ao n8n somente após definir destinatários, gatilhos e conteúdo, sem enviar comunicações externas sem validação.
+- Fazer piloto com OS reais de cada fluxo, conferir campos/documentos/relatórios com a equipe e ajustar antes de ativar automações externas.
+- Critério de aceite: uma OS de cada fluxo piloto pode ser cadastrada, atribuída, acompanhada, documentada, revisada e concluída com prazo e evidências consultáveis; relatório e auditoria correspondem ao processo aprovado.
+- Dependências: materiais e exemplos reais do SESI e FNDE; confirmação do fluxo atual de Caixa; validação dos campos, modelos e papéis por Wiliam e equipe.
+
 ## Primeiro incremento vertical de produção
 
-Uma empresa real (a primeira cliente ou a própria Ávila Ops com uma demanda de
-teste) faz: criar demanda → enviar OS e matrícula → conferir a matrícula →
-resolver as pendências → preparar SIMIL em sombra → executar à mão comparando
-com a tela → confirmar → ver a auditoria. É o que este build entrega.
+A fundação e o fluxo Caixa/SIMIL em modo sombra estão implementados conforme descrito acima. Antes de considerar o EngOps pronto para a operação ampliada da Silveira Cruz, concluir ao menos um piloto de cada fluxo da Fase 12: criar OS → atribuir responsável → registrar vistoria e documentos → resolver pendências → revisar relatório → concluir e consultar auditoria.
+
+## Pendências para o próximo deploy ○
+
+O deploy será executado pelo responsável do projeto. Antes e depois da publicação:
+
+- [ ] Confirmar quais fases e fluxos entram neste deploy; a Fase 12 ainda é roadmap, não funcionalidade pronta.
+- [ ] Conferir no servidor as variáveis obrigatórias do `.env.example`, incluindo banco, segredo SSO e configuração de storage; não registrar valores secretos no repositório.
+- [ ] Confirmar conectividade com PostgreSQL 18, SSO e R2 (ou fallback local previsto para desenvolvimento).
+- [ ] Fazer backup do banco antes de aplicar migrações e conferir se existe procedimento de restauração.
+- [ ] Executar `npm run conferir` no commit que será publicado e corrigir falhas antes do deploy.
+- [ ] Revisar as migrações pendentes e aplicar `npm run prisma:migrate` no ambiente de produção conforme a rotina do deploy.
+- [ ] Seguir `bash deploy/subir.sh`; conferir serviço, porta 3130, proxy Caddy e configuração de worker, se o worker for ativado.
+- [ ] Validar após a publicação: healthcheck, login SSO, seleção de empresa, permissões, criação/consulta de demanda, upload e download de documento, prazos, relatórios e auditoria.
+- [ ] Se qualquer verificação falhar, interromper a ativação operacional e seguir o procedimento de rollback; registrar o resultado e o commit publicado.
+- [ ] Registrar evidência, ambiente e resultado do deploy sem incluir credenciais.
 
 ## Métricas a acompanhar desde já
 
-Tempo entrada→entrega, % de demandas com pendência antes da preparação,
-execuções em sombra confirmadas × recusadas (é a taxa de acerto do mapa de
-campos), jobs FAILED por código.
+Tempo entrada→entrega, % de demandas com pendência antes da preparação, execuções em sombra confirmadas × recusadas (é a taxa de acerto do mapa de campos), jobs FAILED por código, OS concluídas no prazo por contratante e tipo de serviço.
