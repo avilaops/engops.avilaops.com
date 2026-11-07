@@ -42,6 +42,11 @@ Estado em 06/11/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 - Falta: conferir o mapa de campos contra o SIMIL real (primeira demanda de verdade), driver real (após decisão sobre API oficial ou RPA autorizado), healthcheck que bloqueia lote.
 - Critério para sair da sombra: N execuções confirmadas sem "não bateu" (N a definir por empresa, sugestão 30).
 
+## ART Múltipla CREA-SP ◐
+
+- Primeira entrega: em `/automacoes/art`, carregar até 50 demandas da empresa pelo código EngOps e conferir um lote CAIXA por competência, contrato, responsável técnico e atividades comuns. As datas da atividade e a remuneração por OS são informadas na conferência. A prévia é temporária.
+- Próxima entrega: validar o leiaute TXT no CreaOne com um arquivo de referência, persistir lotes e vincular a ART registrada às respectivas OS.
+
 ## Fase 6: RAE ○
 
 - Gerador a partir dos dados validados, regras que bloqueiam erro previsível, prévia, versão final em PDF no dossiê (pasta 06-RAE), `ExecucaoExterna(RAE)`.
