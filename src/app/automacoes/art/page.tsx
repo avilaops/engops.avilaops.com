@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import ConferenciaArt from "@/components/ConferenciaArt";
+import VincularArtForm from "@/components/VincularArtForm";
 import { nomeDoTipo } from "@/dominio/demandas";
 import { prisma } from "@/lib/prisma";
 import { pode } from "@/lib/rbac";
@@ -15,7 +16,7 @@ export default async function ArtMultipla({ searchParams }: { searchParams: Prom
   const consulta = (await searchParams).codigos;
   const entrada = typeof consulta === "string" ? consulta.slice(0, 2001) : "";
   const codigos = [...new Set(entrada.toUpperCase().split(/[\s,;]+/).filter(Boolean))];
-  const invalida = entrada.length > 2000 || codigos.length > LIMITE || codigos.some((codigo) => !/^ENG-\d+$/.test(codigo));
+  const invalida = entrada.length > 2000 || codigos.length > LIMITE || codigos.some((codigo) => !/^ENG-\d{1,20}$/.test(codigo));
   const demandas = codigos.length && !invalida ? await prisma.demanda.findMany({
     where: { empresaId: op.empresa.id, codigo: { in: codigos } },
     select: {
@@ -27,6 +28,16 @@ export default async function ArtMultipla({ searchParams }: { searchParams: Prom
   }) : [];
   const encontrados = new Set(demandas.map((demanda) => demanda.codigo));
   const ausentes = codigos.filter((codigo) => !encontrados.has(codigo));
+  const selecaoCompleta = !invalida && !ausentes.length && demandas.length > 0;
+  const podeVincular = selecaoCompleta && pode(op.papel, "documento.enviar");
+  const documentos = podeVincular ? await prisma.documento.findMany({
+    where: {
+      empresaId: op.empresa.id, demanda: { empresaId: op.empresa.id, codigo: { in: codigos } },
+      tipo: "ART", mime: "application/pdf", removidoEm: null, artMultipla: null,
+    },
+    select: { id: true, nomeArquivo: true, demanda: { select: { codigo: true } } },
+    orderBy: { criadoEm: "desc" },
+  }) : [];
   const ordens = demandas.map((demanda) => {
     const cliente = demanda.cliente?.empresaId === op.empresa.id ? demanda.cliente : null;
     const cnpj = cliente?.documento?.replace(/\D/g, "") ?? "";
@@ -60,7 +71,8 @@ export default async function ArtMultipla({ searchParams }: { searchParams: Prom
         {invalida ? <p role="alert">Informe até {LIMITE} códigos no formato ENG-0001.</p> : null}
         {!invalida && ausentes.length > 0 ? <p role="alert">Códigos indisponíveis nesta empresa: {ausentes.join(", ")}.</p> : null}
       </form>
-      {!invalida && !ausentes.length && ordens.length > 0 ? <ConferenciaArt key={codigos.join(",")} ordens={ordens} /> : null}
+      {selecaoCompleta ? <ConferenciaArt key={codigos.join(",")} ordens={ordens} /> : null}
+      {podeVincular ? <VincularArtForm key={codigos.join(",")} codigos={codigos} documentos={documentos} /> : null}
     </AppShell>
   );
 }

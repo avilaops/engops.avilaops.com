@@ -45,7 +45,8 @@ Estado em 06/11/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 ## ART Múltipla CREA-SP ◐
 
 - Primeira entrega: em `/automacoes/art`, carregar até 50 demandas da empresa pelo código EngOps e conferir um lote CAIXA por competência, contrato, responsável técnico e atividades comuns. As datas da atividade e a remuneração por OS são informadas na conferência. A prévia é temporária.
-- Próxima entrega: validar o leiaute TXT no CreaOne com um arquivo de referência, persistir lotes e vincular a ART registrada às respectivas OS.
+- Vínculo da ART registrada: escolher um PDF já anexado como ART em uma das OS, confirmar a relação de serviços e registrar o vínculo auditado. O PDF fica acessível pela ficha de cada OS vinculada.
+- Próxima entrega: validar o leiaute TXT no CreaOne com um arquivo de referência e persistir a preparação dos lotes.
 
 ## Fase 6: RAE ○
 
