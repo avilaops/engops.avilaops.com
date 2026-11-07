@@ -3,11 +3,22 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { enviarConvite } from "@/servicos/convites";
 import { exigirOperador, exigirSessao, NOME_COOKIE_EMPRESA } from "@/lib/tenant";
 import { pode } from "@/lib/rbac";
 import { criarEmpresa, desligarMembro, esquemaEmpresa, esquemaMembro, mudarModoAutomacao, salvarMembro } from "@/servicos/empresas";
 
 export type EstadoAcao = { erro?: string; ok?: string };
+
+export async function enviarConviteAction(membroId: string): Promise<EstadoAcao> {
+  const op = await exigirOperador();
+  if (!pode(op.papel, "empresa.administrar")) return { erro: "Sem permissão para enviar convites." };
+  if (typeof membroId !== "string" || !membroId || membroId.length > 100) return { erro: "Membro inválido." };
+  try {
+    return await enviarConvite(op.empresa.id, op.email, membroId);
+  } catch (e) { return { erro: mensagem(e) }; }
+}
 
 function mensagem(e: unknown): string {
   if (e instanceof z.ZodError) return e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
@@ -35,6 +46,7 @@ export async function salvarMembroAction(_: EstadoAcao, form: FormData): Promise
   try {
     const dados = esquemaMembro.parse({ email: form.get("email"), nome: form.get("nome"), papel: form.get("papel") });
     await salvarMembro(op.empresa.id, op.email, dados);
+    revalidatePath("/equipe");
     return { ok: `${dados.nome} incluído como ${dados.papel.toLowerCase()}.` };
   } catch (e) {
     return { erro: mensagem(e) };

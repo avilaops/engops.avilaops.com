@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { desligarMembroAction, salvarMembroAction, type EstadoAcao } from "@/app/acoes/empresas";
+import { desligarMembroAction, enviarConviteAction, salvarMembroAction, type EstadoAcao } from "@/app/acoes/empresas";
 import Sheet from "@/components/ui/Sheet";
 import { Toast, useAcao } from "@/components/useAcao";
 import { PAPEIS } from "@/lib/rbac";
 
 type Membro = { id: string; email: string; nome: string; papel: string; papelNome: string; ativo: boolean; ultimoAcesso: string };
 
-export default function EquipeForm({ membros, meuEmail }: { membros: Membro[]; meuEmail: string }) {
+export default function EquipeForm({ membros, meuEmail, convitesHabilitados }: { membros: Membro[]; meuEmail: string; convitesHabilitados: boolean }) {
   const [editando, setEditando] = useState<Membro | null | "novo">(null);
   const { executar, pendente, toast } = useAcao();
   const [estado, agir, enviando] = useActionState(async (e: EstadoAcao, f: FormData) => {
@@ -40,6 +40,8 @@ export default function EquipeForm({ membros, meuEmail }: { membros: Membro[]; m
             {estado.erro ? <p className="form-error">{estado.erro}</p> : null}
             {estado.ok ? <p className="form-ok">{estado.ok}</p> : null}
             <button type="submit" className="primary-button" disabled={enviando}>{enviando ? "Salvando..." : "Salvar"}</button>
+            {m?.ativo ? <button type="button" className="secondary-button" disabled={pendente || enviando || !convitesHabilitados} onClick={() => executar(() => enviarConviteAction(m.id))}>{pendente ? "Aguarde…" : "Enviar convite por e-mail"}</button> : null}
+            {m?.ativo ? <p className="muted">O convite será enviado para o e-mail cadastrado. Salve alterações antes de enviar.</p> : null}
             {m && m.ativo && m.email !== meuEmail ? (
               <button type="button" className="danger-button" disabled={pendente} onClick={() => { executar(() => desligarMembroAction(m.id)); setEditando(null); }}>Desligar acesso</button>
             ) : null}

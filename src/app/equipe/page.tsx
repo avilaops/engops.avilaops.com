@@ -5,6 +5,7 @@ import { exigirOperador } from "@/lib/tenant";
 import { pode, nomeDoPapel } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { dataHora } from "@/lib/formatos";
+import { conviteConfigurado } from "@/servicos/convites";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,8 @@ export default async function Equipe() {
       <div className="grid-2">
         <section className="panel">
           <div className="panel-title"><h2>Membros</h2></div>
-          <EquipeForm membros={membros.map((m) => ({ id: m.id, email: m.email, nome: m.nome, papel: m.papel, papelNome: nomeDoPapel(m.papel), ativo: m.ativo, ultimoAcesso: dataHora(m.ultimoAcessoEm) }))} meuEmail={op.email} />
+          <p className="muted" style={{ marginBottom: 12 }}>{conviteConfigurado() ? "Salve o cadastro e abra a pessoa para enviar o convite por e-mail." : "Envio de convites por e-mail ainda não configurado. O cadastro libera o acesso, mas não envia mensagem."}</p>
+          <EquipeForm membros={membros.map((m) => ({ id: m.id, email: m.email, nome: m.nome, papel: m.papel, papelNome: nomeDoPapel(m.papel), ativo: m.ativo, ultimoAcesso: dataHora(m.ultimoAcessoEm) }))} meuEmail={op.email} convitesHabilitados={conviteConfigurado()} />
         </section>
         <section className="panel">
           <div className="panel-title"><h2>Papéis</h2></div>
