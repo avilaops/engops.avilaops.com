@@ -3,6 +3,8 @@ import ClienteForm from "@/components/ClienteForm";
 import { exigirOperador } from "@/lib/tenant";
 import { pode } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import ResumoCnpj from "@/components/ResumoCnpj";
+import { respostaCnpj } from "@/servicos/cnpjws";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +22,16 @@ export default async function Clientes() {
       <div className="grid-2">
         <div className="ios-list">
           {!clientes.length ? <div className="ios-row"><span className="muted">Nenhum contratante ainda.</span></div> : null}
-          {clientes.map((c) => (
-            <a key={c.id} href={`/demandas?busca=${encodeURIComponent(c.nome)}&abertas=nao`} className="ios-row">
+          {clientes.map((c) => {
+            const cadastro = respostaCnpj.safeParse(c.dadosCnpj);
+            return <div key={c.id}>
+            <a href={`/demandas?busca=${encodeURIComponent(c.nome)}&abertas=nao`} className="ios-row">
               <span className="ios-row-label"><strong>{c.nome}</strong><small>{[c.documento, c.email, c.telefone].filter(Boolean).join(" · ") || "sem contato"}</small></span>
               <span className="ios-row-value">{c._count.demandas} demanda(s)</span>
             </a>
-          ))}
+            {cadastro.success ? <ResumoCnpj dados={cadastro.data} salvo /> : null}
+            </div>;
+          })}
         </div>
         {pode(op.papel, "demanda.criar") ? <section className="panel"><div className="panel-title"><h2>Novo contratante</h2></div><ClienteForm /></section> : null}
       </div>

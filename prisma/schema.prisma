@@ -91,6 +91,7 @@ model Cliente {
   documento String?
   email     String?
   telefone  String?
+  dadosCnpj Json?
   criadoEm  DateTime @default(now())
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id])
