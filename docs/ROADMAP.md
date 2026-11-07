@@ -52,14 +52,18 @@ Estado em 06/11/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 - Módulo com preparação, autenticação, navegação, execução, captura de retorno, validação de sucesso real, evidência.
 - Dependência: fluxo do SIOPI documentado; decisão sobre RPA.
 
-## Fase 8: lotes ○
+## Fase 8: lotes ◐
 
-- Seleção múltipla, pré-checagem ("37 selecionadas, 34 prontas, 3 com pendência"), enfileirar só as prontas, bloqueio por healthcheck.
+- Implementado localmente: seleção de até 50 demandas prontas, revalidação antes de enfileirar, resultado por demanda e bloqueio por healthcheck no modo real.
+- Implementado localmente: prévia consolidada antes da confirmação, revalidação na confirmação e processamento manual restrito à empresa da sessão.
+- Falta: publicação e validação autenticada em produção. Ver [entrega de automações](ENTREGA-AUTOMACOES.md).
 
 ## Fase 9: dashboards e notificações ◐
 
 - Feito parcialmente: `/relatorios` com indicadores e funil contados no banco.
-- Falta: exportação CSV/XLSX/PDF, tempo economizado, notificações in-app, `PrazoEmRisco` agendado, mensagens por n8n.
+- Implementado localmente: exportação CSV autenticada e auditada, alertas de atrasos/aprovações/erros ao carregar a central.
+- Implementado localmente: notificações persistentes de aprovação e falha de automação, leitura individual, filtro e paginação em `/notificacoes`.
+- Falta: exportação XLSX/PDF, tempo economizado, `PrazoEmRisco` agendado, mensagens por n8n; publicação e validação do incremento local.
 
 ## Fase 10: IA ○
 

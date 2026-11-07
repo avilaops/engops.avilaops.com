@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PapelMembro } from "@prisma/client";
-import { navegacaoDoPapel, type Secao } from "@/lib/navegacao";
+import { iconeDaSecao, navegacaoDoPapel, type Secao } from "@/lib/navegacao";
+import { Icone } from "@/components/ui/Icones";
 
 export default function SideNav({ section, papel }: { section: Secao; papel: PapelMembro }) {
   const grupos = navegacaoDoPapel(papel);
@@ -13,7 +14,7 @@ export default function SideNav({ section, papel }: { section: Secao; papel: Pap
             const ativo = item.section === section;
             return (
               <Link className={ativo ? "nav-link nav-link-active" : "nav-link"} href={item.href} key={item.href} aria-current={ativo ? "page" : undefined}>
-                {item.label}
+                <Icone nome={iconeDaSecao[item.section]} tamanho={19} /><span>{item.label}</span>
               </Link>
             );
           })}

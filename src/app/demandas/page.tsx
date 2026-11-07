@@ -41,6 +41,9 @@ export default async function Demandas({ searchParams }: { searchParams: Promise
   ]);
   const [abertas, atrasadas, hoje, bloqueios, aprovacoes] = contagens;
   const kanban = sp.visao === "kanban";
+  const parametrosVisao = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(sp)) if (typeof valor === "string" && chave !== "visao") parametrosVisao.set(chave, valor);
+  if (!kanban) parametrosVisao.set("visao", "kanban");
 
   return (
     <AppShell operador={op} section="demandas">
@@ -51,7 +54,7 @@ export default async function Demandas({ searchParams }: { searchParams: Promise
         </div>
         <div className="page-actions">
           {pode(op.papel, "demanda.criar") ? <Link href="/demandas/nova" className="primary-button">+ Nova demanda</Link> : null}
-          <Link href={kanban ? "/demandas" : "/demandas?visao=kanban"} className="secondary-button">{kanban ? "Ver tabela" : "Ver Kanban"}</Link>
+          <Link href={`/demandas?${parametrosVisao}`} className="secondary-button">{kanban ? "Ver tabela" : "Ver Kanban"}</Link>
         </div>
       </div>
 

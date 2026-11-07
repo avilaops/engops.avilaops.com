@@ -204,7 +204,7 @@ export async function processarAgoraAction(): Promise<EstadoAcao> {
   const { umCiclo } = await import("@/automation/core/fila");
   await import("@/automation/workflows");
   let n = 0;
-  while (n < 5 && (await umCiclo(`manual-${op.email}`))) n++;
+  while (n < 5 && (await umCiclo(`manual-${op.email}`, op.empresa.id))) n++;
   const pendentes = await prisma.job.count({ where: { empresaId: op.empresa.id, status: { in: ["QUEUED", "RETRYING"] } } });
   revalidatePath("/automacoes");
   return { ok: n ? `${n} job(s) processado(s). ${pendentes} na fila.` : "Nada na fila." };

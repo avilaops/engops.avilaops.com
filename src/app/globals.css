@@ -333,8 +333,64 @@ a.demand-row:hover { background: var(--hover-bg); }
 .palette-item small { color: var(--subtle-text); margin-left: auto; font-family: var(--mono); font-size: 0.75rem; }
 kbd { font-family: var(--mono); font-size: 0.7rem; border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; color: var(--subtle-text); }
 
+/* ---------- Central de automações ---------- */
+.automation-header { padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.automation-eyebrow { display: block; color: var(--accent); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+.integration-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; }
+.integration-card { display: flex; flex-direction: column; align-items: flex-start; padding: 22px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); }
+.integration-card h3 { font-size: 1.05rem; margin: 0 0 14px; }
+.integration-card p { color: var(--muted); font-size: 0.88rem; line-height: 1.65; margin: 14px 0; }
+.integration-card .secondary-button { margin-top: auto; }
+.automation-alerts { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.automation-alerts a { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-soft); }
+.automation-alerts a:hover { border-color: var(--accent); }
+.automation-selection { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; padding: 16px; margin: 16px 0; border: 1px solid var(--line); border-radius: var(--radius-sm); max-height: 360px; overflow: auto; }
+.automation-selection label { display: flex; align-items: center; gap: 10px; min-height: 40px; overflow-wrap: anywhere; }
+.automation-selection input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+
+/* ---------- Navegação e orientação ---------- */
+:where(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.skip-link { position: fixed; left: 16px; top: -100px; z-index: 100; background: var(--surface); color: var(--text); padding: 12px 18px; border: 2px solid var(--accent); border-radius: var(--radius-sm); }
+.skip-link:focus { top: 12px; }
+.sidebar { background: var(--surface-soft); }
+.nav-link { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.nav-link svg { flex-shrink: 0; }
+.nav-link-active { box-shadow: inset 3px 0 var(--accent); }
+.nav-eyebrow { text-transform: none; letter-spacing: 0; font-size: 0.78rem; font-weight: 600; }
+.navigation-search { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+.navigation-search span { flex: 1; text-align: left; }
+.navigation-search kbd { white-space: nowrap; font-size: 0.65rem; }
+.workspace-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+.workspace-location, .workspace-tools { display: flex; align-items: center; gap: 12px; }
+.workspace-location { font-size: 0.85rem; color: var(--muted); }
+.workspace-location strong { color: var(--text); font-weight: 500; }
+.nav-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+.workspace-tools .theme-toggle, .mobile-menu-tools .theme-toggle { width: 44px; height: 44px; }
+.mobile-context { display: flex; flex-direction: column; min-width: 0; }
+.mobile-context strong, .mobile-context small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-context small { color: var(--muted); font-size: 0.7rem; font-weight: 400; }
+.mobile-menu-tools { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.navigation-palette .search { width: 100%; min-width: 0; margin: 10px 0; }
+.navigation-palette .palette-list { max-height: min(50dvh, 380px); }
+.navigation-palette .palette-item { min-height: 44px; }
+@media (min-width: 821px) and (max-width: 1180px) {
+  :root { --sidebar-w: 216px; }
+  .main-canvas { padding: 22px 20px 40px; }
+  .demand-row { grid-template-columns: 85px minmax(120px, 2fr) minmax(90px, 1fr) 100px 110px; }
+  .demand-row .responsavel, .demand-row.head > :nth-child(4) { display: none; }
+  .grid-main { grid-template-columns: 1fr; }
+}
+
 /* ---------- Celular como app nativo ---------- */
 @media (max-width: 820px) {
+  :root { --topbar-h: 68px; --tab-bar-h: 64px; }
+  .workspace-toolbar { display: none; }
+  .mobile-topbar .brand-lockup { flex: 1; min-width: 0; margin-right: 12px; }
+  .mobile-topbar .workspace-tools { gap: 6px; }
+  .page-actions > * { min-width: 0; }
+  .page-actions .primary-button, .page-actions .secondary-button { white-space: normal; height: auto; min-height: 48px; text-align: center; padding: 10px 12px; }
+  .chip { min-height: 44px; }
+  .filters { padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
   body { font-size: 0.95rem; }
   .app-frame { grid-template-columns: 1fr; }
   .sidebar { display: none; }
@@ -354,7 +410,7 @@ kbd { font-family: var(--mono); font-size: 0.7rem; border: 1px solid var(--line)
   .tab-item:active { transform: scale(0.96); }
   h1 { font-size: 1.75rem; }
   .page-header { flex-direction: column; align-items: stretch; }
-  .page-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .page-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
   .page-actions > * { width: 100%; }
   .primary-button, .secondary-button, .danger-button { height: 50px; border-radius: var(--radius); }
   .row-action { height: 40px; }

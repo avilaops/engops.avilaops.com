@@ -1,5 +1,6 @@
 import type { PapelMembro } from "@prisma/client";
 import { pode } from "@/lib/rbac";
+import type { NomeIcone } from "@/components/ui/Icones";
 
 /**
  * Mapa de navegação. Um só para a coluna do desktop e para a barra de abas +
@@ -9,6 +10,7 @@ export type Secao =
   | "demandas"
   | "nova-demanda"
   | "automacoes"
+  | "notificacoes"
   | "aprovacoes"
   | "pendencias"
   | "prazos"
@@ -21,6 +23,13 @@ export type Secao =
 export type ItemNavegacao = { href: string; label: string; section: Secao };
 export type GrupoNavegacao = { label: string; items: ItemNavegacao[] };
 
+export const iconeDaSecao: Record<Secao, NomeIcone> = {
+  demandas: "demandas", "nova-demanda": "adicionar", automacoes: "automacoes",
+  notificacoes: "sino", aprovacoes: "aprovacoes", pendencias: "alerta",
+  prazos: "prazos", clientes: "pessoas", relatorios: "grafico", equipe: "pessoas",
+  empresa: "empresa", auditoria: "documento",
+};
+
 export const navegacao: GrupoNavegacao[] = [
   {
     label: "Operação",
@@ -31,6 +40,7 @@ export const navegacao: GrupoNavegacao[] = [
       { href: "/pendencias", label: "Pendências", section: "pendencias" },
       { href: "/aprovacoes", label: "Aprovações", section: "aprovacoes" },
       { href: "/automacoes", label: "Automações", section: "automacoes" },
+      { href: "/notificacoes", label: "Notificações", section: "notificacoes" },
     ],
   },
   {

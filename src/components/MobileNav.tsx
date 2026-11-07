@@ -7,7 +7,8 @@ import type { PapelMembro } from "@prisma/client";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Icone } from "@/components/ui/Icones";
 import Sheet from "@/components/ui/Sheet";
-import { abasDoPapel, navegacaoDoPapel, type Secao } from "@/lib/navegacao";
+import { abasDoPapel, iconeDaSecao, navegacaoDoPapel, type Secao } from "@/lib/navegacao";
+import BuscaNavegacao from "@/components/BuscaNavegacao";
 import { nomeDoPapel } from "@/lib/rbac";
 
 export default function MobileNav({ section, operador }: { section: Secao; operador: { nome: string; papel: PapelMembro; empresa: string } }) {
@@ -22,9 +23,9 @@ export default function MobileNav({ section, operador }: { section: Secao; opera
       <header className="mobile-topbar">
         <Link href="/demandas" className="brand-lockup" aria-label="EngOps">
           <span className="brand-mark"><Image src="/simbolo.png" alt="" width={22} height={22} /></span>
-          <strong>EngOps</strong>
+          <span className="mobile-context"><strong>{grupos.flatMap((g) => g.items).find((i) => i.section === section)?.label ?? "EngOps"}</strong><small>{operador.empresa}</small></span>
         </Link>
-        <ThemeToggle className="theme-toggle" />
+        <div className="workspace-tools"><BuscaNavegacao compacto /><Link href="/notificacoes" className="nav-icon-button" aria-label="Abrir notificações"><Icone nome="sino" /></Link></div>
       </header>
 
       <nav className="tab-bar" aria-label="Abas principais">
@@ -55,6 +56,7 @@ export default function MobileNav({ section, operador }: { section: Secao; opera
               <button type="submit" className="secondary-button">Sair</button>
             </form>
           </div>
+          <div className="mobile-menu-tools"><span>Aparência</span><ThemeToggle /></div>
           {grupos.map((grupo) => (
             <section className="sheet-group" key={grupo.label}>
               <h3 className="sheet-group-title">{grupo.label}</h3>
@@ -63,6 +65,7 @@ export default function MobileNav({ section, operador }: { section: Secao; opera
                   const ativo = item.section === section;
                   return (
                     <Link href={item.href} key={item.href} className={ativo ? "ios-row ios-row-active" : "ios-row"} aria-current={ativo ? "page" : undefined} onClick={fechar}>
+                      <Icone nome={iconeDaSecao[item.section]} />
                       <span className="ios-row-label">{item.label}</span>
                       <Icone nome="chevron" tamanho={16} className="chevron" />
                     </Link>

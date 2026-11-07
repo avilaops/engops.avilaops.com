@@ -40,7 +40,7 @@ export default function FiltrosDemandas({ atual, membros }: { atual: Record<stri
       <input className="search" placeholder="Buscar por OS, código, proprietário, endereço, matrícula, CPF..." value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Buscar demandas" />
       <div className="chips" role="group" aria-label="Prazo">
         {PRAZOS.map(([v, r]) => (
-          <button key={v} type="button" className={(atual.prazo ?? "") === v ? "chip chip-active" : "chip"} onClick={() => mudar("prazo", v || null)}>{r}</button>
+          <button key={v} type="button" aria-pressed={(atual.prazo ?? "") === v} className={(atual.prazo ?? "") === v ? "chip chip-active" : "chip"} onClick={() => mudar("prazo", v || null)}>{r}</button>
         ))}
       </div>
       <select className="chip" value={atual.status ?? ""} onChange={(e) => mudar("status", e.target.value || null)} aria-label="Estado">
@@ -51,7 +51,11 @@ export default function FiltrosDemandas({ atual, membros }: { atual: Record<stri
         <option value="">Qualquer responsável</option>
         {membros.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
       </select>
-      <button type="button" className={atual.abertas === "nao" ? "chip chip-active" : "chip"} onClick={() => mudar("abertas", atual.abertas === "nao" ? null : "nao")}>Incluir entregues e arquivadas</button>
+      <button type="button" aria-pressed={atual.abertas === "nao"} className={atual.abertas === "nao" ? "chip chip-active" : "chip"} onClick={() => mudar("abertas", atual.abertas === "nao" ? null : "nao")}>Incluir entregues e arquivadas</button>
+      {Object.entries(atual).some(([chave, valor]) => chave !== "visao" && Boolean(valor)) ? <button type="button" className="text-button" onClick={() => {
+        setBusca("");
+        router.push(atual.visao === "kanban" ? "/demandas?visao=kanban" : "/demandas");
+      }}>Limpar filtros</button> : null}
     </div>
   );
 }

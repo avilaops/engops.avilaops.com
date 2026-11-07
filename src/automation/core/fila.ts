@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Job, NivelEvento, Prisma } from "@prisma/client";
+import { Prisma, type Job, type NivelEvento } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { emitirEvento } from "@/lib/auditoria";
 import { EVENTOS } from "@/dominio/eventos";
@@ -51,7 +51,8 @@ export async function enfileirar(pedido: PedidoJob): Promise<{ job: Job; novo: b
 }
 
 /** Pega um job pronto e o tranca por LEASE_MS. Null quando a fila está vazia. */
-export async function reclamar(workerId: string): Promise<Job | null> {
+export async function reclamar(workerId: string, empresaId?: string): Promise<Job | null> {
+  if (empresaId !== undefined && !empresaId.trim()) throw new Error("Empresa inválida para processar a fila.");
   const agora = new Date();
   const ate = new Date(agora.getTime() + LEASE_MS);
   const linhas = await prisma.$queryRaw<Array<{ id: string }>>`
@@ -63,6 +64,7 @@ export async function reclamar(workerId: string): Promise<Job | null> {
         (status IN ('QUEUED', 'RETRYING') AND "agendadoPara" <= ${agora})
         OR (status = 'RUNNING' AND "travadoAte" < ${agora})
       )
+      ${empresaId === undefined ? Prisma.empty : Prisma.sql`AND "empresaId" = ${empresaId}`}
       ORDER BY prioridade ASC, "agendadoPara" ASC
       FOR UPDATE SKIP LOCKED
       LIMIT 1
@@ -219,8 +221,8 @@ export async function cancelar(jobId: string, empresaId: string, usuario: string
 }
 
 /** Um ciclo do worker: reclama e processa um job. Devolve true se havia algo. */
-export async function umCiclo(workerId = `worker-${randomUUID().slice(0, 8)}`): Promise<boolean> {
-  const job = await reclamar(workerId);
+export async function umCiclo(workerId = `worker-${randomUUID().slice(0, 8)}`, empresaId?: string): Promise<boolean> {
+  const job = await reclamar(workerId, empresaId);
   if (!job) return false;
   await processar(job);
   return true;

@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { notificarEvento } from "@/servicos/notificacoes";
 
 type Cliente = Prisma.TransactionClient | typeof prisma;
 
@@ -45,7 +46,12 @@ export async function emitirEvento(
   payload: Record<string, unknown>,
   tx: Cliente = prisma,
 ) {
-  await tx.eventoDominio.create({ data: { empresaId, nome, payload: json(payload) ?? {} } });
+  const gravar = async (cliente: Prisma.TransactionClient) => {
+    await cliente.eventoDominio.create({ data: { empresaId, nome, payload: json(payload) ?? {} } });
+    await notificarEvento(cliente, empresaId, nome, payload);
+  };
+  if (tx === prisma) await prisma.$transaction(gravar);
+  else await gravar(tx);
 }
 
 function json(valor: unknown): Prisma.InputJsonValue | undefined {

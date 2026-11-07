@@ -12,10 +12,18 @@ export type NomeIcone =
   | "documento"
   | "busca"
   | "check"
-  | "alerta";
+  | "alerta"
+  | "sino"
+  | "pessoas"
+  | "grafico"
+  | "empresa";
 
 /* Ícones de traço no peso do SF Symbols. Sem biblioteca: são doze desenhos. */
 const caminhos: Record<NomeIcone, React.ReactNode> = {
+  sino: <><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 21h4" /></>,
+  pessoas: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5" /></>,
+  grafico: <path d="M4 3v17h17M8 16v-4M13 16V8M18 16V5" />,
+  empresa: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 7h1m4 0h1M9 11h1m4 0h1M10 21v-6h4v6" /></>,
   demandas: (
     <>
       <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
