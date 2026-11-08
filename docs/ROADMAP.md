@@ -42,6 +42,13 @@ Estado em 06/11/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 - Falta: conferir o mapa de campos contra o SIMIL real (primeira demanda de verdade), driver real (após decisão sobre API oficial ou RPA autorizado), healthcheck que bloqueia lote.
 - Critério para sair da sombra: N execuções confirmadas sem "não bateu" (N a definir por empresa, sugestão 30).
 
+## ART Múltipla CREA-SP ◐
+
+- Primeira entrega: em `/automacoes/art`, carregar até 50 demandas da empresa pelo código EngOps e conferir um lote CAIXA por competência, contrato, responsável técnico e atividades comuns. As datas da atividade e a remuneração por OS são informadas na conferência. A prévia é temporária.
+- Vínculo da ART registrada: escolher um PDF já anexado como ART em uma das OS, confirmar a relação de serviços e registrar o vínculo auditado. O PDF fica acessível pela ficha de cada OS vinculada.
+- O vínculo grava `ArtMultiplaVinculada` na outbox para o n8n na mesma transação. O evento carrega apenas os IDs da ART e das demandas. O consumidor deve filtrar pelo nome do evento e deduplicar pelo ID do envelope.
+- Próxima entrega: validar o leiaute TXT no CreaOne com um arquivo de referência e persistir a preparação dos lotes.
+
 ## Fase 6: RAE ○
 
 - Gerador a partir dos dados validados, regras que bloqueiam erro previsível, prévia, versão final em PDF no dossiê (pasta 06-RAE), `ExecucaoExterna(RAE)`.

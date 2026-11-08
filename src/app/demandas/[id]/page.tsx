@@ -15,6 +15,7 @@ import { area, data, mascararDocumento, moeda } from "@/lib/formatos";
 import { nomeDoTipo, progressoDoStatus, transicoesDe } from "@/dominio/demandas";
 import { obterDemanda } from "@/servicos/demandas";
 import { revalidarDemanda } from "@/servicos/validacao";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,21 @@ export default async function DetalheDemanda({ params }: { params: Promise<{ id:
   const { id } = await params;
   const d = await obterDemanda(id, op.empresa.id);
   if (!d) notFound();
-  const { proxima } = await revalidarDemanda(d.id);
+  const [{ proxima }, arts] = await Promise.all([
+    revalidarDemanda(d.id),
+    prisma.artMultipla.findMany({
+      where: { empresaId: op.empresa.id, itens: { some: { demandaId: d.id } }, documento: { empresaId: op.empresa.id } },
+      select: {
+        id: true, numero: true, documento: { select: { id: true, removidoEm: true, tipo: true } },
+        itens: {
+          where: { demanda: { empresaId: op.empresa.id } },
+          select: { demanda: { select: { id: true, codigo: true, numeroOs: true } } },
+          orderBy: { demanda: { codigo: "asc" } },
+        },
+      },
+      orderBy: { criadoEm: "desc" },
+    }),
+  ]);
   const bloqueios = d.pendencias.filter((p) => p.severidade === "BLOQUEIA").length;
   const aprovacaoPendente = d.aprovacoes.find((a) => a.status === "PENDENTE") ?? null;
   const jobAtivo = d.jobs.find((j) => ["QUEUED", "RUNNING", "RETRYING"].includes(j.status)) ?? null;
@@ -65,6 +80,26 @@ export default async function DetalheDemanda({ params }: { params: Promise<{ id:
       <div className="grid-main" style={{ marginTop: 16 }}>
         <div className="stack">
           <PainelDocumentos demandaId={d.id} documentos={d.documentos} podeEnviar={pode(op.papel, "documento.enviar")} podeRemover={pode(op.papel, "documento.remover")} />
+          {arts.length ? (
+            <section className="panel">
+              <div className="panel-title"><h2>ARTs Múltiplas vinculadas</h2></div>
+              <ul>
+                {arts.map(({ id, numero, documento, itens }) => (
+                  <li key={id}>
+                    ART {numero}-SP · {itens.length} OS ·{" "}
+                    {documento.removidoEm || documento.tipo !== "ART" ? <span>PDF indisponível no dossiê</span> :
+                      <a href={`/api/documentos/${documento.id}/arquivo`} target="_blank" rel="noreferrer">Abrir PDF oficial</a>}
+                    <details>
+                      <summary>Ver OS vinculadas</summary>
+                      <ul>
+                        {itens.map(({ demanda }) => <li key={demanda.id}><Link href={`/demandas/${demanda.id}`}>{demanda.codigo}{demanda.numeroOs ? ` · OS ${demanda.numeroOs}` : ""}</Link></li>)}
+                      </ul>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <PainelExecucoes demandaId={d.id} execucoes={d.execucoes} aprovacoes={d.aprovacoes} modo={op.empresa.modoAutomacao} podeAprovar={pode(op.papel, "automacao.aprovar")} />
           <section className="panel">
             <div className="panel-title"><h2>Cadastro</h2></div>

@@ -43,6 +43,7 @@ model Empresa {
   clientes    Cliente[]
   demandas    Demanda[]
   documentos  Documento[]
+  artsMultiplas ArtMultipla[]
   pendencias  Pendencia[]
   jobs        Job[]
   aprovacoes  Aprovacao[]
@@ -185,6 +186,7 @@ model Demanda {
   cliente     Cliente?    @relation(fields: [clienteId], references: [id])
   responsavel Membro?     @relation("responsavel", fields: [responsavelId], references: [id])
   documentos  Documento[]
+  artsMultiplas ItemArtMultipla[]
   checklist   ItemChecklist[]
   pendencias  Pendencia[]
   jobs        Job[]
@@ -253,10 +255,39 @@ model Documento {
 
   empresa Empresa @relation(fields: [empresaId], references: [id])
   demanda Demanda @relation(fields: [demandaId], references: [id])
+  artMultipla ArtMultipla?
 
   @@index([demandaId, categoria])
   @@index([empresaId, hash])
   @@map("documentos")
+}
+
+model ArtMultipla {
+  id          String   @id @default(cuid())
+  empresaId   String
+  numero      String
+  documentoId String   @unique
+  criadoPor   String
+  criadoEm    DateTime @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  documento Documento @relation(fields: [documentoId], references: [id])
+  itens     ItemArtMultipla[]
+
+  @@unique([empresaId, numero])
+  @@map("arts_multiplas")
+}
+
+model ItemArtMultipla {
+  artId     String
+  demandaId String
+
+  art     ArtMultipla @relation(fields: [artId], references: [id])
+  demanda Demanda     @relation(fields: [demandaId], references: [id])
+
+  @@id([artId, demandaId])
+  @@index([demandaId])
+  @@map("itens_art_multipla")
 }
 
 // ---------------------------------------------------------------------------
