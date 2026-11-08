@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  operador: vi.fn(), demandas: vi.fn(), documento: vi.fn(), criar: vi.fn(), auditar: vi.fn(), revalidar: vi.fn(),
+  operador: vi.fn(), demandas: vi.fn(), documento: vi.fn(), criar: vi.fn(), auditar: vi.fn(), emitir: vi.fn(), revalidar: vi.fn(),
 }));
 vi.mock("@/lib/tenant", () => ({ exigirOperador: mocks.operador }));
-vi.mock("@/lib/auditoria", () => ({ auditar: mocks.auditar }));
+vi.mock("@/lib/auditoria", () => ({ auditar: mocks.auditar, emitirEvento: mocks.emitir }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidar }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -49,6 +49,8 @@ describe("vínculo de ART Múltipla", () => {
       itens: { create: [{ demandaId: "1" }, { demandaId: "2" }] },
     } });
     expect(mocks.auditar).toHaveBeenCalledWith(expect.objectContaining({ objetoId: "art-a" }), expect.anything());
+    const [, transacao] = mocks.auditar.mock.calls[0];
+    expect(mocks.emitir).toHaveBeenCalledExactlyOnceWith("empresa-a", "ArtMultiplaVinculada", { artId: "art-a", demandaIds: ["1", "2"] }, transacao);
   });
 
   it("recusa o lote inteiro quando uma OS está indisponível na empresa", async () => {
@@ -59,11 +61,13 @@ describe("vínculo de ART Múltipla", () => {
     }));
     expect(mocks.documento).not.toHaveBeenCalled();
     expect(mocks.criar).not.toHaveBeenCalled();
+    expect(mocks.emitir).not.toHaveBeenCalled();
   });
 
   it("recusa PDF que não pertence aos dossiês da seleção", async () => {
     mocks.documento.mockResolvedValue(null);
     expect(await vincularArtAction({}, formulario())).toHaveProperty("erro");
     expect(mocks.criar).not.toHaveBeenCalled();
+    expect(mocks.emitir).not.toHaveBeenCalled();
   });
 });

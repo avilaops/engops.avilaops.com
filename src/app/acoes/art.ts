@@ -3,7 +3,8 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { auditar } from "@/lib/auditoria";
+import { EVENTOS } from "@/dominio/eventos";
+import { auditar, emitirEvento } from "@/lib/auditoria";
 import { prisma } from "@/lib/prisma";
 import { pode } from "@/lib/rbac";
 import { exigirOperador } from "@/lib/tenant";
@@ -54,6 +55,7 @@ export async function vincularArtAction(_: EstadoAcao, form: FormData): Promise<
         empresaId, usuario: op.email, acao: "art_multipla.vinculada", objetoTipo: "ArtMultipla",
         objetoId: art.id, depois: { numero, documentoId, demandaIds },
       }, tx);
+      await emitirEvento(empresaId, EVENTOS.ArtMultiplaVinculada, { artId: art.id, demandaIds }, tx);
       return demandaIds;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     if (!vinculadas) return { erro: "Confira se o PDF de ART está ativo no dossiê de uma das OS e se todas pertencem ao lote CAIXA/SP." };
