@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useCallback, useState, useTransition } from "react";
 import type { Demanda } from "@prisma/client";
 import { PRIORIDADES, TIPOS_SERVICO, UFS } from "@/dominio/demandas";
 import type { EstadoAcao } from "@/app/acoes/demandas";
+import { consultarCepAction } from "@/app/acoes/cep";
+import ClienteForm from "@/components/ClienteForm";
+import Sheet from "@/components/ui/Sheet";
 
 /** Decimal do Prisma não atravessa a fronteira servidor → cliente: a página converte para número antes. */
 export type DemandaParaForm = Omit<Partial<Demanda>, "areaM2" | "valorAvaliacao"> & { areaM2?: number | null; valorAvaliacao?: number | null };
@@ -13,6 +16,7 @@ type Props = {
   demanda?: DemandaParaForm | null;
   membros: Array<{ id: string; nome: string }>;
   clientes: Array<{ id: string; nome: string }>;
+  podeCadastrarContratante: boolean;
   rotuloBotao: string;
 };
 
@@ -23,10 +27,44 @@ const num = (v: unknown) => (v === null || v === undefined ? "" : String(Number(
  * Um formulário para criar e editar. Rótulo acima do campo, um campo por
  * linha no celular, 48px de altura, fonte 16px (o Safari não dá zoom).
  */
-export default function DemandaForm({ acao, demanda, membros, clientes, rotuloBotao }: Props) {
+export default function DemandaForm({ acao, demanda, membros, clientes, podeCadastrarContratante, rotuloBotao }: Props) {
   const [estado, agir, pendente] = useActionState(acao, {} as EstadoAcao);
   const d = demanda ?? {};
+  const [clienteId, definirClienteId] = useState(d.clienteId ?? "");
+  const [novosClientes, definirNovosClientes] = useState<Props["clientes"]>([]);
+  const opcoesClientes = [...clientes, ...novosClientes.filter((novo) => !clientes.some((cliente) => cliente.id === novo.id))];
+  const [cadastroAberto, definirCadastroAberto] = useState(false);
+  const fecharCadastro = useCallback(() => definirCadastroAberto(false), []);
+  const [cep, definirCep] = useState(d.cep ?? "");
+  const [endereco, definirEndereco] = useState({ logradouro: d.endereco ?? "", bairro: d.bairro ?? "", municipio: d.municipio ?? "", uf: d.uf ?? "" });
+  const [avisoCep, definirAvisoCep] = useState("");
+  const [consultandoCep, consultarCep] = useTransition();
+
+  function buscarCep() {
+    consultarCep(async () => {
+      definirAvisoCep("");
+      try {
+        const resultado = await consultarCepAction(cep);
+        if (!resultado.endereco) {
+          definirAvisoCep(resultado.erro);
+          return;
+        }
+        const encontrado = resultado.endereco;
+        definirCep(encontrado.cep);
+        definirEndereco((atual) => ({
+          logradouro: encontrado.logradouro || atual.logradouro,
+          bairro: encontrado.bairro || atual.bairro,
+          municipio: encontrado.municipio,
+          uf: encontrado.uf,
+        }));
+        definirAvisoCep(encontrado.logradouro && encontrado.bairro ? "Endereço encontrado. Confira os dados e informe o número." : "CEP encontrado. Confira e complete o logradouro e o bairro manualmente.");
+      } catch {
+        definirAvisoCep("Consulta de CEP indisponível. Você pode preencher o endereço manualmente.");
+      }
+    });
+  }
   return (
+    <>
     <form action={agir} className="form">
       <div className="form-section">
         <h3>Serviço</h3>
@@ -44,30 +82,38 @@ export default function DemandaForm({ acao, demanda, membros, clientes, rotuloBo
           <label className="field"><span>Responsável</span>
             <select name="responsavelId" defaultValue={d.responsavelId ?? ""}><option value="">Sem responsável</option>{membros.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}</select>
           </label>
-          <label className="field"><span>Contratante</span>
-            <select name="clienteId" defaultValue={d.clienteId ?? ""}><option value="">Não informado</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}</select>
-          </label>
+          <div className="field">
+            <label className="field"><span>Contratante</span>
+              <select name="clienteId" value={clienteId} onChange={(e) => definirClienteId(e.target.value)}>
+                <option value="">Não informado</option>
+                {opcoesClientes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+            </label>
+            {podeCadastrarContratante ? <button type="button" className="text-button" onClick={() => definirCadastroAberto(true)} disabled={pendente}>+ Cadastrar contratante</button> : null}
+          </div>
         </div>
       </div>
 
       <div className="form-section">
         <h3>Imóvel</h3>
         <div className="field-grid">
-          <label className="field"><span>Endereço</span><input name="endereco" defaultValue={d.endereco ?? ""} placeholder="Rua, avenida..." /></label>
+          <label className="field"><span>CEP</span><input name="cep" value={cep} onChange={(e) => { definirCep(e.target.value); definirAvisoCep(""); }} readOnly={consultandoCep} inputMode="numeric" maxLength={9} placeholder="00000-000" autoComplete="postal-code" /></label>
+          <div className="field"><button type="button" className="secondary-button" onClick={buscarCep} disabled={pendente || consultandoCep || !/^\d{5}-?\d{3}$/.test(cep.trim())}>{consultandoCep ? "Consultando CEP…" : "Buscar endereço pelo CEP"}</button></div>
+        </div>
+        {avisoCep ? <p role="status">{avisoCep}</p> : null}
+        <div className="field-grid">
+          <label className="field"><span>Endereço</span><input name="endereco" value={endereco.logradouro} onChange={(e) => definirEndereco({ ...endereco, logradouro: e.target.value })} readOnly={consultandoCep} placeholder="Rua, avenida..." /></label>
           <div className="field-grid">
             <label className="field"><span>Número</span><input name="numero" defaultValue={d.numero ?? ""} /></label>
             <label className="field"><span>Complemento</span><input name="complemento" defaultValue={d.complemento ?? ""} /></label>
           </div>
         </div>
         <div className="field-grid-3">
-          <label className="field"><span>Bairro</span><input name="bairro" defaultValue={d.bairro ?? ""} /></label>
-          <label className="field"><span>Município</span><input name="municipio" defaultValue={d.municipio ?? ""} /></label>
-          <div className="field-grid">
-            <label className="field"><span>UF</span>
-              <select name="uf" defaultValue={d.uf ?? ""}><option value="">UF</option>{UFS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
-            </label>
-            <label className="field"><span>CEP</span><input name="cep" defaultValue={d.cep ?? ""} inputMode="numeric" placeholder="00000-000" /></label>
-          </div>
+          <label className="field"><span>Bairro</span><input name="bairro" value={endereco.bairro} onChange={(e) => definirEndereco({ ...endereco, bairro: e.target.value })} readOnly={consultandoCep} /></label>
+          <label className="field"><span>Município</span><input name="municipio" value={endereco.municipio} onChange={(e) => definirEndereco({ ...endereco, municipio: e.target.value })} readOnly={consultandoCep} /></label>
+          <label className="field"><span>UF</span>
+            <select name="uf" value={endereco.uf} onChange={(e) => definirEndereco({ ...endereco, uf: e.target.value })} disabled={consultandoCep}><option value="">UF</option>{UFS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
+          </label>
         </div>
         <div className="field-grid-3">
           <label className="field"><span>Matrícula</span><input name="matricula" defaultValue={d.matricula ?? ""} /></label>
@@ -98,7 +144,15 @@ export default function DemandaForm({ acao, demanda, membros, clientes, rotuloBo
 
       {estado.erro ? <p className="form-error">{estado.erro}</p> : null}
       {estado.ok ? <p className="form-ok">{estado.ok}</p> : null}
-      <button type="submit" className="primary-button" disabled={pendente}>{pendente ? "Salvando..." : rotuloBotao}</button>
+      <button type="submit" className="primary-button" disabled={pendente || consultandoCep}>{pendente ? "Salvando..." : rotuloBotao}</button>
     </form>
+    {cadastroAberto ? <Sheet titulo="Cadastrar contratante" aoFechar={fecharCadastro}>
+      <ClienteForm aoCadastrar={(cliente) => {
+        definirNovosClientes((atuais) => [...atuais, cliente]);
+        definirClienteId(cliente.id);
+        fecharCadastro();
+      }} />
+    </Sheet> : null}
+    </>
   );
 }

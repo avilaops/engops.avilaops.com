@@ -7,7 +7,7 @@ import type { DadosCnpj } from "@/servicos/cnpjws";
 import { validarCpfCnpj } from "@/dominio/validacao";
 import ResumoCnpj from "@/components/ResumoCnpj";
 
-export default function ClienteForm() {
+export default function ClienteForm({ aoCadastrar }: { aoCadastrar?: (cliente: { id: string; nome: string }) => void }) {
   const [documento, definirDocumento] = useState("");
   const [nome, definirNome] = useState("");
   const [email, definirEmail] = useState("");
@@ -18,6 +18,7 @@ export default function ClienteForm() {
   const [estado, agir, pendente] = useActionState(async (anterior: EstadoAcao, form: FormData) => {
     const resultado = await criarClienteAction(anterior, form);
     if (resultado.ok) { definirDocumento(""); definirNome(""); definirEmail(""); definirTelefone(""); definirDados(null); definirAviso(""); }
+    if (resultado.cliente) aoCadastrar?.(resultado.cliente);
     return resultado;
   }, {} as EstadoAcao);
   const numero = documento.replace(/\D/g, "");
