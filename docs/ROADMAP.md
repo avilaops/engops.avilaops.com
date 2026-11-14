@@ -57,6 +57,7 @@ Estado em 06/11/2026. ✓ feito, ◐ parcial, ○ não iniciado.
 ## Fase 7: SIOPI ○
 
 - Módulo com preparação, autenticação, navegação, execução, captura de retorno, validação de sucesso real, evidência.
+- Levantamento iniciado em 14/11/2026: [inventário funcional do SIOPI](SIOPI-FUNCIONALIDADES.md), com menu, contexto de unidade, três buscas e 14 atalhos observados nas capturas. Telas internas e regras ainda pendentes; o conector real permanece não implementado.
 - Dependência: fluxo do SIOPI documentado; decisão sobre RPA.
 
 ## Fase 8: lotes ◐
