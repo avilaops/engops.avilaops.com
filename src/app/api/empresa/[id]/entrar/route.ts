@@ -15,8 +15,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (membro) await prisma.membro.update({ where: { id: membro.id }, data: { ultimoAcessoEm: new Date() } });
 
-  const destino = voltar.startsWith("/") ? voltar : "/demandas";
-  const r = NextResponse.redirect(new URL(destino, req.nextUrl.origin), 303);
+  let destino = new URL("/demandas", siteUrl());
+  try {
+    const retorno = new URL(voltar, destino);
+    if (voltar.startsWith("/") && retorno.origin === destino.origin) destino = retorno;
+  } catch {
+    // Retorno inválido mantém a tela padrão no domínio público.
+  }
+  const r = NextResponse.redirect(destino, 303);
   r.cookies.set(NOME_COOKIE_EMPRESA, id, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 30 });
   return r;
 }

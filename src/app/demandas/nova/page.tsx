@@ -24,7 +24,7 @@ export default async function NovaDemanda() {
         </div>
       </div>
       <section className="panel" style={{ maxWidth: 900 }}>
-        <DemandaForm acao={criarDemandaAction} membros={membros} clientes={clientes} rotuloBotao="Criar demanda" />
+        <DemandaForm acao={criarDemandaAction} membros={membros} clientes={clientes} podeCadastrarContratante rotuloBotao="Criar demanda" />
       </section>
     </AppShell>
   );

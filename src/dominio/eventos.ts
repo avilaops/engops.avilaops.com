@@ -9,6 +9,7 @@ export const EVENTOS = {
   DocumentoSolicitado: "DocumentoSolicitado",
   DocumentoEnviado: "DocumentoEnviado",
   DocumentoRemovido: "DocumentoRemovido",
+  ArtMultiplaVinculada: "ArtMultiplaVinculada",
   ValidacaoFalhou: "ValidacaoFalhou",
   DemandaPronta: "DemandaPronta",
   AutomacaoIniciada: "AutomacaoIniciada",

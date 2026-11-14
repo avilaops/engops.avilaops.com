@@ -36,6 +36,7 @@ export default async function EditarDemanda({ params }: { params: Promise<{ id: 
           demanda={{ ...d, areaM2: d.areaM2 === null ? null : Number(d.areaM2), valorAvaliacao: d.valorAvaliacao === null ? null : Number(d.valorAvaliacao) }}
           membros={membros}
           clientes={clientes}
+          podeCadastrarContratante={pode(op.papel, "demanda.criar")}
           rotuloBotao="Salvar alterações"
         />
       </section>

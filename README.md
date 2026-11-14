@@ -51,3 +51,4 @@ Registro no SSO: `auth.avilaops.com/src/lib/apps.ts` (id `engops`).
 - [docs/ECOSSISTEMA-AVILA-OPS.md](docs/ECOSSISTEMA-AVILA-OPS.md)
 - [docs/EVENTOS-DE-DOMINIO.md](docs/EVENTOS-DE-DOMINIO.md)
 - [docs/CONTRATOS-DE-INTEGRACAO.md](docs/CONTRATOS-DE-INTEGRACAO.md)
+- [SIOPI • inventário funcional para o EngOps](docs/SIOPI-FUNCIONALIDADES.md)

@@ -17,7 +17,7 @@ Implementação local; publicação e validação autenticada em produção pend
 
 - SIMIL real: contrato de API ou fluxo autorizado do portal, autenticação e exemplo de confirmação de envio. O driver continua indisponível.
 - RAE: modelo oficial, dados obrigatórios e regras de cálculo. Nenhum relatório é apresentado como RAE oficial sem essas definições.
-- SIOPI: fluxo documentado, autenticação, operações autorizadas e comprovante de sucesso.
+- SIOPI: completar o [inventário funcional](SIOPI-FUNCIONALIDADES.md) iniciado com as capturas da página inicial e do menu; levantar autenticação, operações autorizadas e comprovante de sucesso. As APIs do SIOP federal enviadas como referência pertencem a outro sistema.
 - Banco do Brasil: identificar portal e operação.
 - Notificações: definir destinatários, canais e gatilhos para entregas externas; agenda de alertas de prazo e atualização em tempo real ainda não implementadas.
 - Exportação XLSX/PDF e dossiê ZIP ainda não implementadas.

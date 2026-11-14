@@ -30,6 +30,7 @@ deduplicar.
 | `DocumentoSolicitado` | (reservado) pedido de documento ao cliente | demandaId, tipo | WhatsApp/e-mail via n8n |
 | `DocumentoEnviado` | arquivo entrou no dossiê | demandaId, documentoId, tipo, categoria, versao | portal, auditoria externa |
 | `DocumentoRemovido` | arquivo removido | demandaId, documentoId, tipo | |
+| `ArtMultiplaVinculada` | vínculo da ART registrada com as OS gravado | artId, demandaIds[] | n8n (roteamento interno) |
 | `ValidacaoFalhou` | preparação bloqueada por pendência | demandaId, jobId, bloqueios[] | Planner ("revisar divergência") |
 | `AutomacaoIniciada` | job enfileirado | jobId, workflow, demandaId, modo | analytics |
 | `AutomacaoPausada` | job esperando pessoa | jobId, demandaId, motivo | notificação |

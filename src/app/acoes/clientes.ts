@@ -26,7 +26,7 @@ const esquema = z.object({
   telefone: z.string().trim().max(30).optional().or(z.literal("")).transform((v) => v || null),
 });
 
-export async function criarClienteAction(_: EstadoAcao, form: FormData): Promise<EstadoAcao> {
+export async function criarClienteAction(_: EstadoAcao, form: FormData): Promise<EstadoAcao & { cliente?: { id: string; nome: string } }> {
   const op = await exigirOperador();
   if (!pode(op.papel, "demanda.criar")) return { erro: "Sem permissão." };
   try {
@@ -39,7 +39,7 @@ export async function criarClienteAction(_: EstadoAcao, form: FormData): Promise
       return criado;
     });
     revalidatePath("/clientes");
-    return { ok: `${c.nome} cadastrado.` };
+    return { ok: `${c.nome} cadastrado.`, cliente: { id: c.id, nome: c.nome } };
   } catch (e) {
     if (e instanceof z.ZodError) return { erro: e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n") };
     return { erro: e instanceof Error ? e.message : "Falhou" };
