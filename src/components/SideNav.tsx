@@ -1,24 +1,39 @@
-import Link from "next/link";
+"use client";
+
 import type { PapelMembro } from "@prisma/client";
-import { iconeDaSecao, navegacaoDoPapel, type Secao } from "@/lib/navegacao";
-import { Icone } from "@/components/ui/Icones";
+import { Bell, Building2, CalendarClock, ChartNoAxesCombined, CircleCheck, ClipboardList, FileClock, Plus, TriangleAlert, UsersRound, Workflow, type LucideIcon } from "lucide-react";
+import { navegacaoDoPapel, type Secao } from "@/lib/navegacao";
+import { AnimatedSidebarGroup, AnimatedSidebarGroupContent, AnimatedSidebarGroupLabel, AnimatedSidebarMenu, AnimatedSidebarMenuButton, AnimatedSidebarMenuItem } from "@/components/ui/animated-sidebar";
+
+const icones: Record<Secao, LucideIcon> = {
+  demandas: ClipboardList, "nova-demanda": Plus, automacoes: Workflow,
+  notificacoes: Bell, aprovacoes: CircleCheck, pendencias: TriangleAlert,
+  prazos: CalendarClock, clientes: UsersRound, relatorios: ChartNoAxesCombined,
+  equipe: UsersRound, empresa: Building2, auditoria: FileClock,
+};
 
 export default function SideNav({ section, papel }: { section: Secao; papel: PapelMembro }) {
   const grupos = navegacaoDoPapel(papel);
   return (
-    <nav className="side-nav" aria-label="Navegação principal">
+    <nav aria-label="Navegação principal">
       {grupos.map((group) => (
-        <div className="nav-group" key={group.label}>
-          <span className="nav-eyebrow">{group.label}</span>
-          {group.items.map((item) => {
-            const ativo = item.section === section;
-            return (
-              <Link className={ativo ? "nav-link nav-link-active" : "nav-link"} href={item.href} key={item.href} aria-current={ativo ? "page" : undefined}>
-                <Icone nome={iconeDaSecao[item.section]} tamanho={19} /><span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
+        <AnimatedSidebarGroup key={group.label}>
+          <AnimatedSidebarGroupLabel>{group.label}</AnimatedSidebarGroupLabel>
+          <AnimatedSidebarGroupContent>
+            <AnimatedSidebarMenu>
+              {group.items.map((item) => {
+                const Icon = icones[item.section];
+                return (
+                  <AnimatedSidebarMenuItem key={item.href}>
+                    <AnimatedSidebarMenuButton href={item.href} isActive={item.section === section} icon={<Icon className="size-4" />}>
+                      {item.label}
+                    </AnimatedSidebarMenuButton>
+                  </AnimatedSidebarMenuItem>
+                );
+              })}
+            </AnimatedSidebarMenu>
+          </AnimatedSidebarGroupContent>
+        </AnimatedSidebarGroup>
       ))}
     </nav>
   );
