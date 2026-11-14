@@ -3,6 +3,14 @@
   "application": "avila-engops-avilaops-com",
   "members": [],
   "tasks": [],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "D-20261114-siopi-levantamento",
+      "date": "2026-11-14",
+      "decision": "Documentar as funcionalidades do SIOPI da CAIXA no projeto EngOps a partir das capturas fornecidas pelo usuário.",
+      "rationale": "Preservar campos e rótulos observados, distinguir telas internas ainda não verificadas e evitar configurar APIs do SIOP de orçamento federal como conexão imobiliária.",
+      "evidence": "docs/SIOPI-FUNCIONALIDADES.md • evidências E01 e E02, três buscas, 14 atalhos e referências oficiais do ConectaGov. Não há conexão SIOPI validada por este levantamento."
+    }
+  ],
   "integrations": []
 }
