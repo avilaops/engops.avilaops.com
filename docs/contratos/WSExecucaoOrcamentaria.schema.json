@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WSExecucaoOrcamentaria • representação JSON do contrato SOAP de homologação",
+  "description": "Nomes e opcionalidade do WSDL de 14/11/2026. Decimais são strings exatas no JSON; numeric(16,2) segue o manual. Validações de negócio e MD5 são aplicadas pelo cliente Zod.",
+  "$defs": {
+    "baseDTO": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "x-abstract": true
+    },
+    "credencialDTO": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "perfil": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "senha": {
+          "type": "string",
+          "writeOnly": true,
+          "description": "Hash MD5, tratado como segredo de autenticação."
+        },
+        "usuario": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "senha",
+        "usuario"
+      ],
+      "additionalProperties": false
+    },
+    "filtroExecucaoOrcamentariaPacDTO": {
+      "type": "object",
+      "properties": {
+        "anoExercicio": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        }
+      },
+      "additionalProperties": false
+    },
+    "execucaoOrcamentariaPacDTO": {
+      "type": "object",
+      "properties": {
+        "acao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "anoexercicio": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647,
+          "x-xsd-type": "xs:int"
+        },
+        "antecipado": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "autorizado": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "bloqueado_remanejamento_de_credito": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "bloqueado_rp2": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "bloqueado_rp3": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "descricaoesfera": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "descricaofuncao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "descricaolocalizador": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "descricaoorgao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "descricaosubfuncao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "descricaouo": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "disponivel": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "dotacaoatual": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "dotacaoinicial": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "emp_liq_inscr_rap_np": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "empenhado": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "empenhoaliquidar": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "empenholiquidado": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "esfera": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "funcao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "localizador": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "orgao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "pago": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "pidescricao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "plano_interno": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "programa": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "projetolei": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "rapapagar": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "rapcancelados": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "rapexerciciosanteriores": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "rapinscrito": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "rappago": {
+          "type": "string",
+          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "x-xsd-type": "xs:decimal",
+          "x-postgresql-type": "numeric(16,2)"
+        },
+        "rp_atual": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "rp_lei": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "subfuncao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "tituloacao": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "tituloprograma": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        },
+        "uo": {
+          "type": "string",
+          "x-xsd-type": "xs:string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "retornoDTO": {
+      "type": "object",
+      "properties": {
+        "sucesso": {
+          "type": "boolean"
+        },
+        "mensagensErro": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "required": [
+        "sucesso"
+      ],
+      "additionalProperties": false
+    },
+    "retornoExecucaoPacDTO": {
+      "type": "object",
+      "properties": {
+        "sucesso": {
+          "type": "boolean"
+        },
+        "mensagensErro": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "execucoesOrcamentarias": {
+          "type": "object",
+          "properties": {
+            "execucaoOrcamentaria": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/execucaoOrcamentariaPacDTO"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "sucesso"
+      ],
+      "additionalProperties": false
+    },
+    "consultarPac": {
+      "type": "object",
+      "properties": {
+        "credencial": {
+          "$ref": "#/$defs/credencialDTO"
+        },
+        "filtro": {
+          "$ref": "#/$defs/filtroExecucaoOrcamentariaPacDTO"
+        }
+      },
+      "additionalProperties": false
+    },
+    "consultarPacResponse": {
+      "type": "object",
+      "properties": {
+        "return": {
+          "$ref": "#/$defs/retornoExecucaoPacDTO"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -22,6 +22,7 @@
     "@aws-sdk/client-s3": "^3.1105.0",
     "@aws-sdk/s3-request-presigner": "^3.1105.0",
     "@prisma/client": "6.19.3",
+    "fast-xml-parser": "5.12.1",
     "jsonwebtoken": "^9.0.2",
     "next": "16.2.11",
     "react": "19.2.4",

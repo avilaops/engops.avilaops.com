@@ -10,7 +10,22 @@
       "decision": "Documentar as funcionalidades do SIOPI da CAIXA no projeto EngOps a partir das capturas fornecidas pelo usuário.",
       "rationale": "Preservar campos e rótulos observados, distinguir telas internas ainda não verificadas e evitar configurar APIs do SIOP de orçamento federal como conexão imobiliária.",
       "evidence": "docs/SIOPI-FUNCIONALIDADES.md • evidências E01 e E02, três buscas, 14 atalhos e referências oficiais do ConectaGov. Não há conexão SIOPI validada por este levantamento."
+    },
+    {
+      "id": "D-20261114-siop-wsexecucao",
+      "date": "2026-11-14",
+      "decision": "Implementar no EngOps o WSExecucaoOrcamentaria federal explicitamente solicitado, usando o contrato de homologação e mantendo a distinção do SIOPI da CAIXA.",
+      "rationale": "Cobrir todos os DTOs, os 40 campos e os 19 valores monetários do WSDL, com histórico por empresa e precisão numeric(16,2). O usuário confirmou que ainda não possui a credencial do webservice.",
+      "evidence": "docs/SIOP-EXECUCAO-ORCAMENTARIA.md • contrato versionado, schemas, migração, SQL de consulta, testes locais e validação em PostgreSQL."
     }
   ],
-  "integrations": []
+  "integrations": [
+    {
+      "id": "I-20261114-siop-wsexecucao",
+      "environment": "Banco engops • servidor de aplicações; provedor SIOP em homologação",
+      "status": "estrutura aplicada; consulta autenticada aguardando credencial",
+      "identity": "Configuração por empresa, com referencia de segredo no ambiente; nenhum usuario externo inventado",
+      "evidence": "Migração 0004_siop_execucao_orcamentaria aplicada e verificada; backup em /var/backups/engops/engops-pre-siop-20261114211006674.dump; homologação desativada."
+    }
+  ]
 }
