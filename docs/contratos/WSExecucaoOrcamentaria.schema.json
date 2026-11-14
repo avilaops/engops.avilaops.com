@@ -23,10 +23,12 @@
         "senha": {
           "type": "string",
           "writeOnly": true,
-          "description": "Hash MD5, tratado como segredo de autenticação."
+          "description": "Hash MD5, tratado como segredo de autenticação.",
+          "pattern": "^[a-fA-F0-9]{32}$"
         },
         "usuario": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -61,31 +63,31 @@
         },
         "antecipado": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "autorizado": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "bloqueado_remanejamento_de_credito": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "bloqueado_rp2": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "bloqueado_rp3": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
@@ -115,43 +117,43 @@
         },
         "disponivel": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "dotacaoatual": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "dotacaoinicial": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "emp_liq_inscr_rap_np": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "empenhado": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "empenhoaliquidar": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "empenholiquidado": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
@@ -173,7 +175,7 @@
         },
         "pago": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
@@ -191,37 +193,37 @@
         },
         "projetolei": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "rapapagar": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "rapcancelados": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "rapexerciciosanteriores": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "rapinscrito": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },
         "rappago": {
           "type": "string",
-          "pattern": "^-?[0-9]+\\.[0-9]{2}$",
+          "pattern": "^-?[0-9]{1,14}\\.[0-9]{2}$",
           "x-xsd-type": "xs:decimal",
           "x-postgresql-type": "numeric(16,2)"
         },

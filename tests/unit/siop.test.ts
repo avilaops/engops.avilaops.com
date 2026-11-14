@@ -16,6 +16,9 @@ describe("contrato SIOP conferido contra o WSDL de homologação", () => {
     expect(Object.keys(execucaoOrcamentariaPacDTOSchema.shape).sort()).toEqual(campos.map((campo) => campo.nome).sort());
     const json = JSON.parse(readFileSync("docs/contratos/WSExecucaoOrcamentaria.schema.json", "utf8"));
     expect(Object.keys(json.$defs.execucaoOrcamentariaPacDTO.properties).sort()).toEqual(campos.map((campo) => campo.nome).sort());
+    const padraoDecimal = new RegExp(json.$defs.execucaoOrcamentariaPacDTO.properties.pago.pattern);
+    expect(padraoDecimal.test("99999999999999.99")).toBe(true);
+    expect(padraoDecimal.test("100000000000000.00")).toBe(false);
     expect([...CAMPOS_DECIMAIS].sort()).toEqual(campos.filter((campo) => campo.tipo === "decimal").map((campo) => campo.nome).sort());
     expect(execucaoOrcamentariaPacDTOSchema.parse({ localizador: "0032", uo: "00128" })).toEqual({ localizador: "0032", uo: "00128" });
   });

@@ -58,10 +58,13 @@ export const retornoExecucaoPacDTOSchema = retornoDTOSchema.extend({
 export const consultarPacSchema = z.object({ credencial: credencialDTOSchema.optional(), filtro: filtroExecucaoOrcamentariaPacDTOSchema.optional() }).strict();
 export const consultarPacResponseSchema = z.object({ return: retornoExecucaoPacDTOSchema.optional() }).strict();
 export type CredencialDTO = z.infer<typeof credencialDTOSchema>;
+export type BaseDTO = z.infer<typeof baseDTOSchema>;
 export type FiltroExecucaoOrcamentariaPacDTO = z.infer<typeof filtroExecucaoOrcamentariaPacDTOSchema>;
 export type ExecucaoOrcamentariaPacDTO = z.infer<typeof execucaoOrcamentariaPacDTOSchema>;
 export type RetornoDTO = z.infer<typeof retornoDTOSchema>;
 export type RetornoExecucaoPacDTO = z.infer<typeof retornoExecucaoPacDTOSchema>;
+export type ConsultarPac = z.infer<typeof consultarPacSchema>;
+export type ConsultarPacResponse = z.infer<typeof consultarPacResponseSchema>;
 
 export const configuracaoSiopSchema = z.object({
   ambiente: ambienteSiopSchema.default("HOMOLOGACAO"),
