@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://servicoweb.siop.sof.planejamento.gov.br/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http" name="WSExecucaoOrcamentaria" targetNamespace="http://servicoweb.siop.sof.planejamento.gov.br/">
+  <wsdl:types>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://servicoweb.siop.sof.planejamento.gov.br/" elementFormDefault="unqualified" targetNamespace="http://servicoweb.siop.sof.planejamento.gov.br/" version="1.0">
+
+  <xs:element name="consultarPac" type="tns:consultarPac"/>
+
+  <xs:element name="consultarPacResponse" type="tns:consultarPacResponse"/>
+
+  <xs:complexType name="consultarPac">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="credencial" type="tns:credencialDTO"/>
+      <xs:element minOccurs="0" name="filtro" type="tns:filtroExecucaoOrcamentariaPacDTO"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="credencialDTO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseDTO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="email" type="xs:string"/>
+          <xs:element minOccurs="0" name="perfil" type="xs:int"/>
+          <xs:element name="senha" type="xs:string"/>
+          <xs:element name="usuario" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType abstract="true" name="baseDTO">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="filtroExecucaoOrcamentariaPacDTO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseDTO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="anoExercicio" type="xs:int"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="consultarPacResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:retornoExecucaoPacDTO"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="retornoExecucaoPacDTO">
+    <xs:complexContent>
+      <xs:extension base="tns:retornoDTO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="execucoesOrcamentarias">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" name="execucaoOrcamentaria" type="tns:execucaoOrcamentariaPacDTO"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="retornoDTO">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="mensagensErro" nillable="true" type="xs:string"/>
+      <xs:element name="sucesso" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="execucaoOrcamentariaPacDTO">
+    <xs:complexContent>
+      <xs:extension base="tns:baseDTO">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="acao" type="xs:string"/>
+          <xs:element minOccurs="0" name="anoexercicio" type="xs:int"/>
+          <xs:element minOccurs="0" name="antecipado" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="autorizado" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="bloqueado_remanejamento_de_credito" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="bloqueado_rp2" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="bloqueado_rp3" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="descricaoesfera" type="xs:string"/>
+          <xs:element minOccurs="0" name="descricaofuncao" type="xs:string"/>
+          <xs:element minOccurs="0" name="descricaolocalizador" type="xs:string"/>
+          <xs:element minOccurs="0" name="descricaoorgao" type="xs:string"/>
+          <xs:element minOccurs="0" name="descricaosubfuncao" type="xs:string"/>
+          <xs:element minOccurs="0" name="descricaouo" type="xs:string"/>
+          <xs:element minOccurs="0" name="disponivel" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="dotacaoatual" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="dotacaoinicial" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="emp_liq_inscr_rap_np" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="empenhado" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="empenhoaliquidar" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="empenholiquidado" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="esfera" type="xs:string"/>
+          <xs:element minOccurs="0" name="funcao" type="xs:string"/>
+          <xs:element minOccurs="0" name="localizador" type="xs:string"/>
+          <xs:element minOccurs="0" name="orgao" type="xs:string"/>
+          <xs:element minOccurs="0" name="pago" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="pidescricao" type="xs:string"/>
+          <xs:element minOccurs="0" name="plano_interno" type="xs:string"/>
+          <xs:element minOccurs="0" name="programa" type="xs:string"/>
+          <xs:element minOccurs="0" name="projetolei" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="rapapagar" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="rapcancelados" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="rapexerciciosanteriores" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="rapinscrito" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="rappago" type="xs:decimal"/>
+          <xs:element minOccurs="0" name="rp_atual" type="xs:string"/>
+          <xs:element minOccurs="0" name="rp_lei" type="xs:string"/>
+          <xs:element minOccurs="0" name="subfuncao" type="xs:string"/>
+          <xs:element minOccurs="0" name="tituloacao" type="xs:string"/>
+          <xs:element minOccurs="0" name="tituloprograma" type="xs:string"/>
+          <xs:element minOccurs="0" name="uo" type="xs:string"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="consultarPacResponse">
+    <wsdl:part element="tns:consultarPacResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="consultarPac">
+    <wsdl:part element="tns:consultarPac" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="WSExecucaoOrcamentaria">
+    <wsdl:operation name="consultarPac">
+      <wsdl:input message="tns:consultarPac" name="consultarPac">
+    </wsdl:input>
+      <wsdl:output message="tns:consultarPacResponse" name="consultarPacResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WSExecucaoOrcamentariaSoapBinding" type="tns:WSExecucaoOrcamentaria">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="consultarPac">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="consultarPac">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="consultarPacResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WSExecucaoOrcamentaria">
+    <wsdl:port binding="tns:WSExecucaoOrcamentariaSoapBinding" name="WSExecucaoOrcamentariaPort">
+      <soap:address location="http://testews.siop.gov.br:8080/services/WSExecucaoOrcamentaria"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

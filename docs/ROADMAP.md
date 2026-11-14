@@ -120,6 +120,15 @@ O deploy será executado pelo responsável do projeto. Antes e depois da publica
 - [ ] Se qualquer verificação falhar, interromper a ativação operacional e seguir o procedimento de rollback; registrar o resultado e o commit publicado.
 - [ ] Registrar evidência, ambiente e resultado do deploy sem incluir credenciais.
 
+## SIOP federal • incremento solicitado em 14/11/2026
+
+Implementação independente do SIOPI imobiliário da Fase 7. Contrato completo do
+WSExecucaoOrcamentaria, schemas, quatro tabelas, view de totais e consultas
+autenticadas estão descritos em [SIOP • execução orçamentária](SIOP-EXECUCAO-ORCAMENTARIA.md).
+A consulta real de homologação depende da credencial específica do webservice,
+que o usuário informou ainda não possuir. Preparar a estrutura não comprova
+autenticação no serviço federal.
+
 ## Métricas a acompanhar desde já
 
 Tempo entrada→entrega, % de demandas com pendência antes da preparação, execuções em sombra confirmadas × recusadas (é a taxa de acerto do mapa de campos), jobs FAILED por código, OS concluídas no prazo por contratante e tipo de serviço.

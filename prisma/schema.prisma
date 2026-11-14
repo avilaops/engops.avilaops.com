@@ -50,6 +50,10 @@ model Empresa {
   auditorias  Auditoria[]
   eventos     EventoDominio[]
   notificacoes Notificacao[]
+  siopCredenciais SiopCredencial[]
+  siopConsultas SiopConsulta[]
+  siopRetornos SiopRetorno[]
+  siopExecucoes SiopExecucaoOrcamentariaPac[]
 
   @@map("empresas")
 }
@@ -572,4 +576,132 @@ model Notificacao {
 
   @@index([destinatario, lidaEm])
   @@map("notificacoes")
+}
+
+// SIOP federal • WSExecucaoOrcamentaria (não é o SIOPI imobiliário).
+enum AmbienteSiop {
+  HOMOLOGACAO
+  PRODUCAO
+}
+
+enum StatusConsultaSiop {
+  PENDENTE
+  CONCLUIDA
+  RECUSADA
+  FALHOU
+}
+
+model SiopCredencial {
+  id           String         @id @default(cuid())
+  empresaId    String
+  ambiente     AmbienteSiop   @default(HOMOLOGACAO)
+  usuario      String?
+  email        String?
+  perfil       Int?
+  /// Referência a variável protegida; o hash MD5 nunca é persistido.
+  senhaEnvRef  String?
+  habilitada   Boolean        @default(false)
+  criadoEm     DateTime       @default(now())
+  atualizadoEm DateTime       @updatedAt
+  empresa      Empresa        @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  consultas    SiopConsulta[]
+
+  @@unique([empresaId, ambiente])
+  @@unique([id, empresaId])
+  @@map("siop_credenciais")
+}
+
+model SiopConsulta {
+  id            String             @id @default(cuid())
+  empresaId     String
+  credencialId  String
+  ambiente      AmbienteSiop
+  /// FiltroExecucaoOrcamentariaPacDTO.anoExercicio (exercicio no manual).
+  anoExercicio  Int
+  operacao      String             @default("consultarPac")
+  status        StatusConsultaSiop @default(PENDENTE)
+  solicitadoPor String
+  criadoEm      DateTime           @default(now())
+  terminadoEm   DateTime?
+  erroCodigo    String?
+  empresa       Empresa            @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  credencial    SiopCredencial     @relation(fields: [credencialId, empresaId], references: [id, empresaId], onDelete: Restrict, onUpdate: NoAction)
+  retorno       SiopRetorno?
+
+  @@unique([id, empresaId])
+  @@index([empresaId, ambiente, anoExercicio, criadoEm])
+  @@map("siop_consultas")
+}
+
+/// RetornoExecucaoPacDTO, incluindo os campos herdados de RetornoDTO.
+model SiopRetorno {
+  id                 String                        @id @default(cuid())
+  empresaId          String
+  consultaId         String                        @unique
+  sucesso            Boolean
+  mensagensErro      Json?
+  execucoesPresentes Boolean                       @default(false)
+  criadoEm           DateTime                      @default(now())
+  empresa            Empresa                       @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  consulta           SiopConsulta                  @relation(fields: [consultaId, empresaId], references: [id, empresaId], onDelete: Restrict, onUpdate: NoAction)
+  execucoes          SiopExecucaoOrcamentariaPac[]
+
+  @@unique([id, empresaId])
+  @@unique([consultaId, empresaId])
+  @@index([empresaId, criadoEm])
+  @@map("siop_retornos")
+}
+
+/// Todos os 40 campos do ExecucaoOrcamentariaPacDTO do WSDL, sem renomear.
+model SiopExecucaoOrcamentariaPac {
+  id                                 String      @id @default(cuid())
+  empresaId                          String
+  retornoId                          String
+  ordem                              Int
+  acao                               String?
+  anoexercicio                       Int?
+  antecipado                         Decimal?    @db.Decimal(16, 2)
+  autorizado                         Decimal?    @db.Decimal(16, 2)
+  bloqueado_remanejamento_de_credito Decimal?    @db.Decimal(16, 2)
+  bloqueado_rp2                      Decimal?    @db.Decimal(16, 2)
+  bloqueado_rp3                      Decimal?    @db.Decimal(16, 2)
+  descricaoesfera                    String?
+  descricaofuncao                    String?
+  descricaolocalizador               String?
+  descricaoorgao                     String?
+  descricaosubfuncao                 String?
+  descricaouo                        String?
+  disponivel                         Decimal?    @db.Decimal(16, 2)
+  dotacaoatual                       Decimal?    @db.Decimal(16, 2)
+  dotacaoinicial                     Decimal?    @db.Decimal(16, 2)
+  emp_liq_inscr_rap_np               Decimal?    @db.Decimal(16, 2)
+  empenhado                          Decimal?    @db.Decimal(16, 2)
+  empenhoaliquidar                   Decimal?    @db.Decimal(16, 2)
+  empenholiquidado                   Decimal?    @db.Decimal(16, 2)
+  esfera                             String?
+  funcao                             String?
+  localizador                        String?
+  orgao                              String?
+  pago                               Decimal?    @db.Decimal(16, 2)
+  pidescricao                        String?
+  plano_interno                      String?
+  programa                           String?
+  projetolei                         Decimal?    @db.Decimal(16, 2)
+  rapapagar                          Decimal?    @db.Decimal(16, 2)
+  rapcancelados                      Decimal?    @db.Decimal(16, 2)
+  rapexerciciosanteriores            Decimal?    @db.Decimal(16, 2)
+  rapinscrito                        Decimal?    @db.Decimal(16, 2)
+  rappago                            Decimal?    @db.Decimal(16, 2)
+  rp_atual                           String?
+  rp_lei                             String?
+  subfuncao                          String?
+  tituloacao                         String?
+  tituloprograma                     String?
+  uo                                 String?
+  empresa                            Empresa     @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  retorno                            SiopRetorno @relation(fields: [retornoId, empresaId], references: [id, empresaId], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([retornoId, ordem])
+  @@index([empresaId, retornoId, orgao, uo, programa, acao, localizador], map: "siop_execucoes_empresa_retorno_classificacao_idx")
+  @@map("siop_execucoes_orcamentarias_pac")
 }
