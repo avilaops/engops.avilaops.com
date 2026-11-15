@@ -17,12 +17,14 @@ Correção do usuário: as capturas de Poder/Esfera eram uma pergunta sobre pree
 ## Entregas e verificações
 
 - [x] Migração 0006: catálogo, cursores de coleta, regras e entregas de alertas; índices de busca textual e filtros. Verificar migração em PostgreSQL isolado e isolamento por tenant.
-- [ ] Motor de coleta e conciliação: testes de retomada, lease vencida, idempotência, deduplicação, registro desatualizado e falha parcial. Importação histórica integral e atualização recorrente; cobertura verificável por origem/período.
+- [x] Motor de coleta e conciliação: testes de retomada, lease vencida, idempotência, deduplicação, registro desatualizado e falha parcial. Atualização recorrente e cobertura verificável por origem/período.
+- [ ] Conclusão da carga histórica inicial • processamento em segundo plano, com cobertura parcial explícita.
 - [x] Busca SQL global, paginação e consolidação com os mesmos filtros; testes de busca além da primeira página, valores desconhecidos, etapas e igualdade entre contagens e agrupamentos.
-- [ ] Salvos atualizados, alertas de alteração/prazo e regras pessoais por empresa; testes de duplicação, autorização e inexistência de vazamento entre empresas.
-- [ ] Tela global, filtros, análise, regras e situação da coleta; manter consulta direta como ferramenta adicional, sem filtros locais sendo chamados globais.
-- [ ] Conferir Auth gov.br e caminho de credenciamento oficial. Não inventar Client ID/Secret nem simular login como autenticação real.
-- [ ] Testes, build, revisão, backup, tablespace, migração e publicação; conferir UI, banco, worker e alertas reais. Manter objetivo aberto enquanto houver trabalho ou dependência necessária pendente.
+- [x] Salvos atualizados, alertas de alteração/prazo e regras pessoais por empresa; testes de duplicação, autorização e inexistência de vazamento entre empresas.
+- [x] Tela global, filtros, análise, regras e situação da coleta; manter consulta direta como ferramenta adicional, sem filtros locais sendo chamados globais.
+- [x] Conferir Auth gov.br e caminho de credenciamento oficial. Não inventar Client ID/Secret nem simular login como autenticação real.
+- [ ] Credenciamento e login real gov.br • dependência externa de elegibilidade e autorização oficial.
+- [x] Testes, build, revisão, backup, tablespace, migração e publicação; conferir UI, banco e worker. Alertas validados em PostgreSQL isolado, sem fabricar alteração de edital em produção. Manter objetivo aberto enquanto houver dependência necessária pendente.
 
 ## Estado inicial
 
@@ -36,3 +38,5 @@ Base 7e4c389, com evidências a04ffd0 preservadas. Produção possui somente con
 • Credenciamento gov.br: o formulário enviado pelo usuário é SGD Integrar Produtos ID. As regras oficiais não demonstram elegibilidade da Ávila Ops comercial para integração. Não orientar seleção fictícia de Poder/Esfera. O conector permanece condicionado à autorização oficial; as consultas públicas e o SSO Ávila Ops continuam independentes.
 • Publicação 1b27751 com pipeline 43693041282 aprovado. Migração 0006, tablespace e onze índices conferidos; oito fluxos habilitados. Navegador aprovou busca global, gráficos, preservação de notas, isolamento e layout móvel. Carga inicial em andamento.
 • Operação revelou HTTP 400 por tamanho de página PNCP: lotes 500 e PCA 5 rejeitados; 50 e 10 aceitos em chamadas reais. Adaptador corrigido para limites específicos do provedor, com teste de regressão. Script de tablespace corrigido para nomes de índices com maiúsculas; reaplicação idempotente aprovada.
+• Correção publicada em ef457a1 pelo pipeline 43694074586. CI aprovou 159 testes, sete deles PostgreSQL. Navegador repetido em 2026-11-15T08:26:09Z aprovado. Os oito fluxos têm páginas bem-sucedidas e falhas zeradas; 13.880 registros indexados na conferência seguinte. Isso não representa cobertura nacional completa.
+• API PCA informou início mínimo 2021-04-01 em resposta HTTP 422. Ajustado o início somente desse fluxo, antes de qualquer página histórica bem-sucedida. Primeira janela abril/2021 concluída sem erro. Configuração de novas instalações atualizada.
