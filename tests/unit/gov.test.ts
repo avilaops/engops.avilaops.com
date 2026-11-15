@@ -1,10 +1,40 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { consultarGov, esquemaFiltrosGov, filtrarPaginaGov } from "@/integracoes/gov";
+import { consultarGov, consultarDetalheGov, esquemaFiltrosGov, filtrarPaginaGov, type OportunidadeGov } from "@/integracoes/gov";
 
 afterEach(() => vi.unstubAllGlobals());
 const resposta = (body: unknown, status = 200) => vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status })));
 
 describe("Central GOV • fontes oficiais", () => {
+  const salvoPlano: OportunidadeGov = { id: "12345678000190-0-000001/2023#22", fonte: "PNCP", tipo: "PLANEJAMENTO", objeto: "Retrato anterior", orgao: "Órgão", cnpj: "12345678000190", uf: null, municipio: null, modalidade: "Serviço", situacao: "Planejado • não é edital aberto", valor: 10, publicado: "2022-12-01", prazo: "2023-01-01", atualizado: "2022-12-01", ano: 2023, url: "https://pncp.gov.br/app/pca/12345678000190/2023/1" };
+  it("atualiza item de PCA salvo sem depender da varredura nacional, inclusive fora da primeira página", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [], totalRegistros: 11, totalPaginas: 2 })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ idPcaPncp: "12345678000190-0-000001/2023", orgaoEntidadeCnpj: "12345678000190", orgaoEntidadeRazaoSocial: "Órgão", anoPca: 2023, dataAtualizacaoGlobalPCA: "2026-11-01", itens: [{ numeroItem: 22, descricaoItem: "Serviço atualizado", valorTotal: 20, dataDesejada: "2023-02-01" }] }], totalRegistros: 11, totalPaginas: 2 })));
+    vi.stubGlobal("fetch", fetchMock);
+    const atual = await consultarDetalheGov(salvoPlano);
+    expect(atual).toMatchObject({ id: salvoPlano.id, tipo: "PLANEJAMENTO", objeto: "Serviço atualizado", valor: 20, atualizado: "2026-11-01", ano: 2023 });
+    const url = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(url.pathname).toBe("/api/consulta/v1/pca/atualizacao");
+    expect(url.searchParams.get("cnpj")).toBe(salvoPlano.cnpj);
+    expect(url.searchParams.get("pagina")).toBe("2");
+  });
+  it("não trata indisponibilidade de PCA salvo como exclusão do item", async () => {
+    resposta({}, 503);
+    await expect(consultarDetalheGov(salvoPlano)).rejects.toThrow(/503/);
+  });
+  it("percorre janelas válidas de até 365 dias quando o item de PCA não é encontrado", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(new Response(null, { status: 204 }))));
+    expect(await consultarDetalheGov(salvoPlano)).toBeNull();
+    const chamadas = vi.mocked(fetch).mock.calls;
+    expect(chamadas.length).toBeGreaterThan(1);
+    for (const [entrada] of chamadas) {
+      const p = new URL(String(entrada)).searchParams;
+      const data = (s: string) => new Date(`${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T00:00:00Z`).getTime();
+      expect((data(p.get("dataFim")!) - data(p.get("dataInicio")!)) / 86400000).toBeLessThanOrEqual(365);
+      expect(p.get("dataInicio")! >= "20210401").toBe(true);
+    }
+    expect(new URL(String(chamadas.at(-1)![0])).searchParams.get("dataInicio")).toBe("20210401");
+  });
   it("respeita os limites reais de página do PNCP inclusive PCA", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
     await consultarGov({ fonte: "abertas" }, { tamanhoPagina: 500 });

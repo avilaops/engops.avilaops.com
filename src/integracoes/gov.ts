@@ -151,6 +151,31 @@ export async function consultarGov(entrada: unknown, opcoes: { tamanhoPagina?: n
 }
 
 export async function consultarDetalheGov(item: OportunidadeGov): Promise<OportunidadeGov | null> {
+  if (item.tipo === "PLANEJAMENTO") {
+    const plano = item.id.match(/^([A-Z0-9]{12}\d{2})-0-\d+\/\d{4}#\d+$/);
+    if (!plano) return null;
+    // A API de consulta publica o plano com seus itens, filtrável por órgão e
+    // atualização. Percorrer as páginas e janelas evita depender da carga nacional
+    // ou tratar a primeira página sem o item como se ele tivesse sido removido.
+    const limite = new Date("2021-04-01T00:00:00Z").getTime();
+    let fim = new Date(`${isoDia(new Date())}T00:00:00Z`).getTime();
+    const iniciou = Date.now();
+    while (fim >= limite) {
+      const inicio = Math.max(limite, fim - 364 * 86400000);
+      let pagina = 1;
+      let paginas = 1;
+      do {
+        if (Date.now() - iniciou > 120000) throw new Error("Consulta de salvo PCA excedeu o tempo; retrato anterior preservado");
+        const resultado = await consultarGov({ fonte: "planejamento", cnpj: plano[1], inicio: isoDia(new Date(inicio)), fim: isoDia(new Date(fim)), pagina }, { tamanhoPagina: 10 });
+        const atualizado = resultado.itens.find(v => v.id === item.id);
+        if (atualizado) return atualizado;
+        paginas = resultado.paginas;
+        pagina++;
+      } while (pagina <= paginas);
+      fim = inicio - 86400000;
+    }
+    return null;
+  }
   const pncp = item.id.match(/^([A-Z0-9]{12}\d{2})-1-(\d+)\/(\d{4})$/);
   const url = pncp ? `https://pncp.gov.br/api/consulta/v1/orgaos/${pncp[1]}/compras/${pncp[3]}/${Number(pncp[2])}`
     : item.tipo === "PREGAO" ? `https://dadosabertos.compras.gov.br/modulo-legado/3.1_consultarPregoes_Id?id_compra=${encodeURIComponent(item.id)}` : null;
