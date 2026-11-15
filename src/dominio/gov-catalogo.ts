@@ -30,13 +30,20 @@ export const esquemaBuscaGlobal = z.object({
   if (v.minimo !== undefined && v.maximo !== undefined && v.minimo > v.maximo) ctx.addIssue({ code: "custom", message: "Intervalo de valores inválido" });
 });
 export type BuscaGlobalGov = z.infer<typeof esquemaBuscaGlobal>;
-export type CursorGov = { dia: string; pagina: number; modalidade: number };
+export type CursorGov = { dia: string; pagina: number; modalidade: number; janelaDias?: 1 | 30 };
+export function janelaColetaGov(fonte: string, historica: boolean, cursor: CursorGov): 1 | 30 {
+  if (!historica) return 1;
+  if (fonte !== "planejamento") return 30;
+  // Cursores anteriores sem tamanho explícito precisam terminar a janela mensal.
+  // Alterar o intervalo de uma página já iniciada poderia omitir itens.
+  return cursor.pagina === 1 || cursor.janelaDias === 1 ? 1 : 30;
+}
 export function proximoCursorGov(cursor: CursorGov, paginas: number, modalidades: number[]): CursorGov {
   if (cursor.pagina < paginas) return { ...cursor, pagina: cursor.pagina + 1 };
   const proxima = modalidades[modalidades.indexOf(cursor.modalidade) + 1];
   if (proxima !== undefined) return { ...cursor, pagina: 1, modalidade: proxima };
   const dia = new Date(`${cursor.dia}T12:00:00Z`); dia.setUTCDate(dia.getUTCDate() + 1);
-  return { dia: dia.toISOString().slice(0, 10), pagina: 1, modalidade: modalidades[0] };
+  return { ...cursor, dia: dia.toISOString().slice(0, 10), pagina: 1, modalidade: modalidades[0] };
 }
 export const atrasoGov = (falhas: number) => Math.min(3600000, 15000 * 2 ** Math.min(falhas, 8));
 export function regiaoGov(uf: string | null): string | null {
