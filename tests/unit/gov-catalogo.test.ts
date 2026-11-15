@@ -1,9 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { chaveGov, fingerprintGov, normalizarBuscaGov, esquemaBuscaGlobal, proximoCursorGov, atrasoGov } from "@/dominio/gov-catalogo";
+import { chaveGov, fingerprintGov, normalizarBuscaGov, esquemaBuscaGlobal, proximoCursorGov, atrasoGov, janelaColetaGov } from "@/dominio/gov-catalogo";
 import type { OportunidadeGov } from "@/integracoes/gov";
 
 const item = { id: "12345678000190-1-000005/2026", tipo: "CONTRATACAO", fonte: "PNCP", objeto: "Manutenção", orgao: "Órgão", cnpj: "12345678000190", uf: "SP", municipio: "Cidade", modalidade: "Pregão eletrônico", situacao: "Divulgada", valor: 10, publicado: "2026-11-01", prazo: "2026-11-20", atualizado: "2026-11-02", ano: 2026, url: "https://pncp.gov.br/app/editais/12345678000190/2026/5" } as OportunidadeGov;
 describe("catálogo global GOV", () => {
+  it("usa dias para PCA sem mudar o intervalo de uma página mensal já iniciada", () => {
+    const cursor = { dia: "2023-04-21", pagina: 1, modalidade: 1 };
+    expect(janelaColetaGov("planejamento", true, cursor)).toBe(1);
+    expect(janelaColetaGov("planejamento", true, { ...cursor, pagina: 2 })).toBe(30);
+    const diario = { ...cursor, janelaDias: 1 as const };
+    expect(janelaColetaGov("planejamento", true, proximoCursorGov(diario, 2, [1]))).toBe(1);
+    const seguinte = proximoCursorGov({ ...diario, pagina: 2 }, 2, [1]);
+    expect(seguinte).toMatchObject({ dia: "2023-04-22", pagina: 1, janelaDias: 1 });
+    expect(janelaColetaGov("compras", true, cursor)).toBe(30);
+    expect(janelaColetaGov("planejamento", false, cursor)).toBe(1);
+  });
   it("deduplica a identificação PNCP entre fontes sem misturar legado ou itens de planos", () => {
     expect(chaveGov(item)).toBe(chaveGov({ ...item, fonte: "COMPRAS" }));
     expect(chaveGov({ ...item, tipo: "PREGAO", id: "123" })).toBe("compras:123");

@@ -17,6 +17,8 @@ O worker executa duas reservas independentes, com lease, checkpoint persistente,
 
 Para planejamento salvo, a conferência individual pesquisa o órgão nas páginas da API PCA por janelas de até 365 dias, desde o período atual até o início permitido pela fonte em 01/04/2021. O item é identificado pelo controle PNCP completo e número, sem depender da posição na primeira página ou da conclusão do histórico nacional. Indisponibilidade preserva o retrato anterior e gera nova tentativa.
 
+O histórico PCA usa janelas diárias: a consulta mensal de abril/maio de 2023 apresentou HTTP 500 na fonte enquanto a diária respondeu normalmente. Cursores mensais anteriores que já estejam na página 2 ou seguinte concluem o mesmo intervalo antes da mudança. O tamanho da janela fica no cursor, mantendo as páginas seguintes no mesmo período. Nenhum dia do histórico é descartado.
+
 Papéis que podem editar demandas podem salvar/analisar oportunidades. Consulta e revisor apenas leem. Toda gravação e consulta de salvos usa empresa da sessão. Falhas externas aparecem como falhas, não como resultado vazio. Links são oficiais e conteúdo externo é renderizado como texto.
 
 Login é centralizado em `auth.avilaops.com`. O provedor gov.br permanece desabilitado sem credenciamento oficial; as APIs públicas não dependem dele. O formulário SGD Integrar Produtos ID exige dados de órgão público. Não há Poder/Esfera comprovadamente aplicável à Ávila Ops comercial; não selecionar dados fictícios. É necessária análise de elegibilidade conforme o [termo oficial](https://www.gov.br/governodigital/pt-br/estrategias-e-governanca-digital/transformacao-digital/ferramentas/autenticacao-gov.br/termo-de-uso-do-servico-de-integracao-com-a-conta-gov.br), além de credenciais.

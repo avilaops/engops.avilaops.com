@@ -83,6 +83,24 @@ describe.skipIf(!url)("GOV • PostgreSQL real, busca global, coleta e isolament
     expect(await prisma.notificacao.count({ where: { empresaId: outro.empresa.id } })).toBe(0);
     expect((await desativarRegraGov(outro, regra.id)).count).toBe(0);
   }, 120000);
+  it("conclui a janela PCA mensal já paginada e mantém a nova janela diária nas páginas seguintes", async () => {
+    await prisma.govColeta.create({ data: { id: "pca-migracao", fonte: "planejamento", historica: true, inicio: new Date("2023-04-21"), cursor: { dia: "2023-04-21", pagina: 2, modalidade: 1 }, habilitada: true } });
+    mocks.consultar.mockResolvedValue({ itens: [], paginas: 2 });
+    await cicloColetaGov();
+    expect(mocks.consultar.mock.calls[0][0]).toMatchObject({ inicio: "2023-04-21", fim: "2023-05-20", pagina: 2 });
+    const primeiro = await prisma.govColeta.findUniqueOrThrow({ where: { id: "pca-migracao" } });
+    expect(primeiro.cursor).toMatchObject({ dia: "2023-05-21", pagina: 1 });
+    await prisma.govColeta.update({ where: { id: primeiro.id }, data: { proximaEm: new Date(0) } });
+    await cicloColetaGov();
+    expect(mocks.consultar.mock.calls[1][0]).toMatchObject({ inicio: "2023-05-21", fim: "2023-05-21", pagina: 1 });
+    expect((await prisma.govColeta.findUniqueOrThrow({ where: { id: primeiro.id } })).cursor).toMatchObject({ dia: "2023-05-21", pagina: 2, janelaDias: 1 });
+    await prisma.govColeta.update({ where: { id: primeiro.id }, data: { proximaEm: new Date(0) } });
+    await cicloColetaGov();
+    expect(mocks.consultar.mock.calls[2][0]).toMatchObject({ inicio: "2023-05-21", fim: "2023-05-21", pagina: 2 });
+    const final = await prisma.govColeta.findUniqueOrThrow({ where: { id: primeiro.id } });
+    expect(final.cursor).toMatchObject({ dia: "2023-05-22", pagina: 1, janelaDias: 1 });
+    expect(final.cobertoAte?.toISOString()).toBe("2023-05-21T23:59:59.000Z");
+  }, 120000);
   it("reserva uma coleta por worker, recupera lease vencida e não avança cursor após falha", async () => {
     const cursor = { dia: "2026-11-01", pagina: 1, modalidade: 1 };
     await prisma.govColeta.create({ data: { id: "teste", fonte: "compras", inicio: agora, cursor, habilitada: true } });

@@ -3,7 +3,7 @@ import { statfs } from "node:fs/promises";
 import { Prisma, type GovColeta } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { consultarGov, consultarDetalheGov, esquemaOportunidade, MODALIDADES } from "@/integracoes/gov";
-import { atrasoGov, chaveGov, proximoCursorGov, type CursorGov } from "@/dominio/gov-catalogo";
+import { atrasoGov, chaveGov, proximoCursorGov, janelaColetaGov, type CursorGov } from "@/dominio/gov-catalogo";
 import { indexarGov } from "@/servicos/gov-ingestao";
 import { alertarPrazosGov } from "@/servicos/gov-alertas";
 
@@ -63,7 +63,8 @@ export async function cicloColetaGov() {
       await prisma.govColeta.updateMany({ where: { id: coleta.id, reservadoPor: token }, data: { reservaAte: null, reservadoPor: null, proximaEm: new Date(Date.now() + 3600000) } });
       return true;
     }
-    const fim = coleta.historica ? [adicionarDias(cursor.dia, 29), hoje].sort()[0] : cursor.dia;
+    const janelaDias = janelaColetaGov(coleta.fonte, coleta.historica, cursor);
+    const fim = [adicionarDias(cursor.dia, janelaDias - 1), hoje].sort()[0];
     const fonte = coleta.fonte === "alteracoes" ? "publicacoes" : coleta.fonte;
     const resultado = await consultarGov({ fonte, pagina: cursor.pagina,
       ...(fonte === "abertas" ? { fim: "2099-12-31" } : { inicio: cursor.dia, fim }),
@@ -74,7 +75,8 @@ export async function cicloColetaGov() {
     const terminouPeriodo = terminouPagina && (seguinte.dia !== cursor.dia);
     if (terminouPeriodo) seguinte = { ...seguinte, dia: adicionarDias(fim, 1) };
     const cicloCompleto = fonte === "abertas" ? terminouPagina : seguinte.dia > hoje;
-    const cursorFinal = cicloCompleto && !coleta.historica ? { dia: adicionarDias(hoje, -7), pagina: 1, modalidade: modalidades[0] } : seguinte;
+    const cursorBase = cicloCompleto && !coleta.historica ? { dia: adicionarDias(hoje, -7), pagina: 1, modalidade: modalidades[0] } : seguinte;
+    const cursorFinal = coleta.historica && coleta.fonte === "planejamento" ? { ...cursorBase, janelaDias } : cursorBase;
     await prisma.$transaction(async tx => {
       const atual = await tx.govColeta.findFirst({ where: { id: coleta.id, reservadoPor: token, reservaAte: { gt: new Date() } } });
       if (!atual) throw new Error("Reserva da coleta venceu; página será repetida");
