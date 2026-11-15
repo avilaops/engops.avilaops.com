@@ -8,3 +8,5 @@ out
 next-env.d.ts
 standalone.tgz
 storage/
+# Evidências locais de navegador; sem cookies ou tokens.
+reports/central-gov/
