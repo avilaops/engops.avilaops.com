@@ -8,8 +8,8 @@
       "id": "D-20261115-gov-global",
       "date": "2026-11-15",
       "decision": "Ampliar Central GOV com catálogo indexado global, coleta contínua, salvos atualizados, alertas internos e análise consolidada.",
-      "rationale": "Usuário autorizou todas as pendências. As capturas de Poder e Esfera eram dúvidas de credenciamento, sem requisito de filtros. Elegibilidade comercial para gov.br não foi demonstrada.",
-      "evidence": "Plano 2026-11-15-central-gov-global.md; sete testes PostgreSQL reais aprovados; 151 testes unitários e build local aprovados. Publicação e carga histórica ainda pendentes."
+      "rationale": "Usuário autorizou todas as pendências e confirmou plataforma comercial própria, sem órgão público parceiro. As capturas de Poder e Esfera eram dúvidas de credenciamento, sem requisito de filtros. Login gov.br depende de autorização oficial compatível com o uso.",
+      "evidence": "Plano 2026-11-15-central-gov-global.md; publicação 31277de saudável; CI anterior 159 testes aprovados, incluindo sete PostgreSQL; navegador e coleta ativos. Auditoria acrescentou conferência individual PCA: três regressões e consulta real de leitura aprovadas, com publicação dessa correção pendente. Carga histórica ainda em andamento."
     },
     {
       "id": "D-20261115-central-gov",
