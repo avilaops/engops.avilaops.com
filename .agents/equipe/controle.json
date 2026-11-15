@@ -37,9 +37,9 @@
     {
       "id": "I-20261115-central-gov",
       "environment": "engops.avilaops.com • applications • banco engops",
-      "status": "primeira versão publicada; catálogo global em implementação; PNCP com intermitência 503; gov.br condicionado a elegibilidade e credenciamento oficial",
+      "status": "catálogo global publicado em 1b27751; coleta habilitada; ajuste de limites de paginação PNCP em validação; gov.br condicionado a elegibilidade e credenciamento oficial",
       "identity": "Tenant Ávila Ops • 67.954.417/0001-64; acesso administrativo nicolas@avilaops.com; nenhuma credencial GOV inventada",
-      "evidence": "Migração 0005_central_gov aplicada; tenant idempotente; backup /var/backups/engops/engops-pre-central-gov-20261115.dump conferido. Navegador confirmou dados reais, paginação, notas persistidas e isolamento entre Ávila Ops e Silveira Cruz."
+      "evidence": "Migração 0006 aplicada; tabela e onze índices em engops_gov; montagem verificada com 16 GiB livres; oito coletas habilitadas. Pipeline 43693041282 aprovado. Navegador em 2026-11-15T08:15:46Z confirmou busca global, análise, notas, isolamento e responsividade. Carga histórica em formação; limites PNCP 10 a 50 confirmados por requisições reais após HTTP 400 com lotes incompatíveis."
     },
     {
       "id": "I-20261114-siop-wsexecucao",

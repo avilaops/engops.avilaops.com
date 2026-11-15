@@ -64,8 +64,39 @@ async function verificar() {
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "layout móvel sem overflow");
     await page.screenshot({ path: path.join(dir, "mobile.png"), fullPage: true });
+    if (process.argv.includes("--global")) {
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.goto(base);
+      await page.getByRole("link", { name: "Busca global", exact: true }).waitFor();
+      assert.ok(await page.locator("article.gov-card").count(), "catálogo contém oportunidades reais indexadas");
+      const total = await page.locator(".stat").first().innerText();
+      assert.match(total, /Registros compatíveis na base/i);
+      const tituloIndexado = await page.locator("article.gov-card h2").first().innerText();
+      const termos = tituloIndexado.split(/\s+/).slice(0, 5).join(" ").slice(0, 190).replace(/\s+\S*$/, "");
+      await page.goto(base + "?busca=" + encodeURIComponent(termos));
+      assert.ok(await page.locator("article.gov-card").count(), "busca textual encontra registro indexado");
+      await page.goto(base + "?visao=analise");
+      await page.getByRole("heading", { name: "Órgãos • 20 maiores grupos", exact: true }).waitFor();
+      assert.ok(await page.locator("meter").count(), "análise calculada com dados reais");
+      await page.goto(base + "?visao=coleta");
+      assert.equal(await page.getByText("Páginas processadas", { exact: true }).count(), 8, "oito fluxos de coleta visíveis");
+      await page.goto(base + "?visao=salvas");
+      assert.ok(await page.locator("article.gov-card").count(), "salvo anterior preservado");
+      assert.equal(await page.getByLabel("Notas da empresa").first().inputValue(), "Consulta inicial pela Central GOV.");
+      if (resultado.outra) {
+        await ctx.addCookies([{ name: "engops_empresa", value: resultado.outra.id, domain: "engops.avilaops.com", path: "/", secure: true, httpOnly: true, sameSite: "Lax" }]);
+        await page.goto(base + "?visao=salvas");
+        assert.equal(await page.getByLabel("Notas da empresa").count(), 0, "notas não vazam para outra empresa");
+        await ctx.addCookies([{ name: "engops_empresa", value: resultado.empresa.id, domain: "engops.avilaops.com", path: "/", secure: true, httpOnly: true, sameSite: "Lax" }]);
+      }
+      await page.goto(base);
+      await page.screenshot({ path: path.join(dir, "global-desktop.png"), fullPage: true });
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "busca global móvel sem overflow");
+      await page.screenshot({ path: path.join(dir, "global-mobile.png"), fullPage: true });
+    }
     assert.deepEqual(achados, [], "sem erros no navegador");
-    const evidencia = { empresa: resultado.empresa, fonte: "Compras.gov.br", oportunidadesReais: true, paginacao: true, responsivo: true, persistenciaEIsolamento: process.argv.includes("--salvar"), verificadoEm: new Date().toISOString() };
+    const evidencia = { empresa: resultado.empresa, fonte: "Compras.gov.br", oportunidadesReais: true, paginacao: true, responsivo: true, persistenciaEIsolamento: process.argv.includes("--salvar") || process.argv.includes("--global"), buscaGlobalEAnalise: process.argv.includes("--global"), verificadoEm: new Date().toISOString() };
     await fs.writeFile(path.join(dir, "resultado.json"), JSON.stringify(evidencia, null, 2));
     console.log(JSON.stringify(evidencia));
   } finally { await browser.close(); }

@@ -11,8 +11,9 @@ DO $$ BEGIN
   END IF;
 END $$;
 ALTER TABLE gov_registros SET TABLESPACE engops_gov;
-SELECT format('ALTER INDEX %I SET TABLESPACE engops_gov', indexrelid::regclass)
-FROM pg_index WHERE indrelid = 'gov_registros'::regclass
+SELECT format('ALTER INDEX %I.%I SET TABLESPACE engops_gov', n.nspname, c.relname)
+FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE i.indrelid = 'gov_registros'::regclass
 \gexec
 -- Habilitar somente quando o volume também estiver montado no container.
 -- UPDATE gov_coletas SET habilitada = true;
