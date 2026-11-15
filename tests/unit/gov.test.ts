@@ -5,6 +5,15 @@ afterEach(() => vi.unstubAllGlobals());
 const resposta = (body: unknown, status = 200) => vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status })));
 
 describe("Central GOV • fontes oficiais", () => {
+  it("respeita os limites reais de página do PNCP inclusive PCA", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    await consultarGov({ fonte: "abertas" }, { tamanhoPagina: 500 });
+    expect(new URL(String(vi.mocked(fetch).mock.calls[0][0])).searchParams.get("tamanhoPagina")).toBe("50");
+    await consultarGov({ fonte: "planejamento" }, { tamanhoPagina: 5 });
+    expect(new URL(String(vi.mocked(fetch).mock.calls[1][0])).searchParams.get("tamanhoPagina")).toBe("10");
+    await consultarGov({ fonte: "compras" }, { tamanhoPagina: 500 });
+    expect(new URL(String(vi.mocked(fetch).mock.calls[2][0])).searchParams.get("tamanhoPagina")).toBe("500");
+  });
   it("consulta todas as áreas e preserva ausência de valor, paginação e link oficial", async () => {
     resposta({ data: [{ numeroControlePNCP: "12345678000190-1-000005/2026", objetoCompra: "Serviços gerais", orgaoEntidade: { cnpj: "12345678000190", razaoSocial: "Órgão" }, unidadeOrgao: { ufSigla: "SP" }, anoCompra: 2026, sequencialCompra: 5 }], totalRegistros: 37, totalPaginas: 2 });
     const r = await consultarGov({ fonte: "abertas", pagina: 2, fim: "2026-12-31" });

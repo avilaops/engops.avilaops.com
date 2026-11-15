@@ -108,8 +108,10 @@ export async function consultarGov(entrada: unknown, opcoes: { tamanhoPagina?: n
   const inicio = f.inicio ?? isoDia(new Date(hoje.getTime() - 7 * 86400000));
   const fim = f.fim ?? isoDia(f.fonte === "abertas" ? new Date(hoje.getFullYear() + 1, 11, 31, 12) : hoje);
   if (inicio > fim) throw new Error("Data inicial deve anteceder a final");
-  const tamanho = opcoes.tamanhoPagina ?? (f.fonte === "planejamento" ? 1 : 10);
-  if (!Number.isInteger(tamanho) || tamanho < 1 || tamanho > 500) throw new Error("Tamanho de página inválido");
+  const solicitado = opcoes.tamanhoPagina ?? 10;
+  if (!Number.isInteger(solicitado) || solicitado < 1 || solicitado > 500) throw new Error("Tamanho de página inválido");
+  // PNCP aceita de 10 a 50; o módulo Compras admite lotes maiores.
+  const tamanho = ["compras", "pregoes"].includes(f.fonte) ? solicitado : Math.min(50, Math.max(10, solicitado));
   const params = new URLSearchParams({ pagina: String(f.pagina), tamanhoPagina: String(tamanho) });
   let endpoint: string;
   if (f.fonte === "compras") {
