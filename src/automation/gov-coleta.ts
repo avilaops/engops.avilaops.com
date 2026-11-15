@@ -26,7 +26,7 @@ export async function prepararColetasGov() {
     ["pca-recentes", "planejamento", false, recente],
     ["compras-historico", "compras", true, "2021-01-01"],
     ["pncp-historico", "publicacoes", true, "2021-01-01"],
-    ["pca-historico", "planejamento", true, "2021-01-01"],
+    ["pca-historico", "planejamento", true, "2021-04-01"],
     ["legado-historico", "pregoes", true, "2000-01-01"],
   ] as const;
   for (const [id, fonte, historica, inicio] of especificacoes) await prisma.govColeta.upsert({ where: { id }, update: {}, create: {
