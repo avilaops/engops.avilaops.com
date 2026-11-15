@@ -5,6 +5,20 @@
   "tasks": [],
   "decisions": [
     {
+      "id": "D-20261115-gov-global",
+      "date": "2026-11-15",
+      "decision": "Ampliar Central GOV com catálogo indexado global, coleta contínua, salvos atualizados, alertas internos e análise consolidada.",
+      "rationale": "Usuário autorizou todas as pendências. As capturas de Poder e Esfera eram dúvidas de credenciamento, sem requisito de filtros. Elegibilidade comercial para gov.br não foi demonstrada.",
+      "evidence": "Plano 2026-11-15-central-gov-global.md; sete testes PostgreSQL reais aprovados; 151 testes unitários e build local aprovados. Publicação e carga histórica ainda pendentes."
+    },
+    {
+      "id": "D-20261115-central-gov",
+      "date": "2026-11-15",
+      "decision": "Publicar Central GOV no EngOps sem restrição de área, com tenant Ávila Ops CNPJ 67.954.417/0001-64 e login gov.br centralizado no Auth.",
+      "rationale": "Usuário aprovou o escopo e quer consultar demandas públicas e filtrar oportunidades no próprio sistema. Fontes públicas não exigem login gov.br.",
+      "evidence": "docs/CENTRAL-GOV.md • PR EngOps #7, produção 7e4c389; PR Auth #59, produção 0c23ebb; 147 testes EngOps, 416 testes Auth, migração isolada e navegador de produção aprovados."
+    },
+    {
       "id": "D-20261114-siopi-levantamento",
       "date": "2026-11-14",
       "decision": "Documentar as funcionalidades do SIOPI da CAIXA no projeto EngOps a partir das capturas fornecidas pelo usuário.",
@@ -20,6 +34,13 @@
     }
   ],
   "integrations": [
+    {
+      "id": "I-20261115-central-gov",
+      "environment": "engops.avilaops.com • applications • banco engops",
+      "status": "primeira versão publicada; catálogo global em implementação; PNCP com intermitência 503; gov.br condicionado a elegibilidade e credenciamento oficial",
+      "identity": "Tenant Ávila Ops • 67.954.417/0001-64; acesso administrativo nicolas@avilaops.com; nenhuma credencial GOV inventada",
+      "evidence": "Migração 0005_central_gov aplicada; tenant idempotente; backup /var/backups/engops/engops-pre-central-gov-20261115.dump conferido. Navegador confirmou dados reais, paginação, notas persistidas e isolamento entre Ávila Ops e Silveira Cruz."
+    },
     {
       "id": "I-20261114-siop-wsexecucao",
       "environment": "Banco engops • servidor de aplicações; provedor SIOP em homologação",

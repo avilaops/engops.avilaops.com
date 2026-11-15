@@ -1,0 +1,38 @@
+name: engops-avilaops-com
+
+services:
+  web:
+    image: ghcr.io/avilaops/engops.avilaops.com:latest
+    container_name: engops-avilaops-com-web
+    restart: unless-stopped
+    env_file: [.env]
+    init: true
+    expose: ["3130"]
+    networks:
+      edge:
+        ipv4_address: 172.31.0.18
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - storage:/app/storage
+      # Somente o tablespace público do catálogo, sem os dados dos outros apps.
+      - /mnt/HC_Volume_106542212/postgres-tablespaces/engops-gov:/app/gov-volume:ro
+    labels:
+      avilaops.domain: engops.avilaops.com
+      avilaops.stack: engops
+      avilaops.tier: web
+      avilaops.backup: "true"
+      avilaops.owner: nicolas
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3130/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  storage:
+    name: engops-avilaops-com-storage
+
+networks:
+  edge:
+    external: true

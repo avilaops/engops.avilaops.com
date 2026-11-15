@@ -32,7 +32,7 @@
 - [x] Salvos em prisma/schema.prisma, migração 0005_central_gov e src/servicos/gov.ts; testar isolamento, autorização e upsert idempotente. Provisionamento tenant idempotente com auditoria.
 - [x] Tela src/app/gov/page.tsx, detalhes, formulário e navegação compartilhada. Consultar todas as áreas, filtros explícitos, origem, salvos e notas.
 - [x] Auth: validar estado não secreto do conector; corrigir ambiente, PKCE e validação GOV em src/lib/provedores.ts, oauth.ts e módulo GOV dedicado. Testes node:test.
-- [ ] Executar conferir/build EngOps, testes/tipos/lint/build Auth; revisar diffs; backup e migração; publicar pelos pipelines existentes; verificar tenant, isolamento, consultas reais, autenticação e revisão publicada.
+- [x] Executar conferir/build EngOps, testes/tipos/lint/build Auth; revisar diffs; backup e migração; publicar pelos pipelines existentes; verificar tenant, isolamento, consultas reais, autenticação e revisão publicada.
 
 ## Registro
 
@@ -42,3 +42,8 @@
 • Ávila Ops criada em produção e script repetido confirmou idempotência. Backup /var/backups/engops/engops-pre-central-gov-20261115.dump verificado.
 • Auth: 416 testes aprovados e build local aprovado; conector sem credenciais oficiais, usuário confirmou que a integração precisava ser implementada. Pronto para configurar sem exigir gov.br nas consultas públicas.
 • Consulta real de 50 registros sofreu timeout; paginação ajustada para 10 contratações ou um plano com seus itens, mantendo acesso a todas as páginas e salto por número.
+• Produção EngOps 7e4c389 e Auth 0c23ebb, pipelines 43688732768 e 43688296830 concluídos com sucesso. Migração 0005 aplicada e healthcheck banco OK.
+• Navegador de produção em 15/11/2026 07:17 UTC: consulta Compras real, paginação, desktop/mobile sem overflow, salvamento e notas persistidos, zero vazamento para outro tenant. Evidência local ignorada em reports/central-gov/resultado.json e capturas desktop.png/mobile.png.
+• Diagnóstico de navegador usa HMAC nativo: jsonwebtoken é incorporado pelo Next ao bundle e não fica disponível como módulo independente na imagem standalone. Ajuste somente no script manual, sem alteração funcional da aplicação.
+• PNCP passou a responder 503 também em consultas independentes; a tela informa a indisponibilidade e oferece outra fonte. Antes da indisponibilidade, consultas reais confirmaram propostas, publicações e dados PCA. Não há promessa de disponibilidade do provedor.
+• Login Auth normal confirmado no navegador; gov.br sem credenciais é bloqueado como esperado. Login real no provedor não foi declarado concluído: depende de Client ID/Secret oficiais, ainda ausentes e reconhecidos pelo usuário.
