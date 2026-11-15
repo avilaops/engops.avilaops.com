@@ -1,107 +1,62 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import AppShell from "@/components/AppShell";
-import { AnalisarGov, SalvarGov } from "@/components/GovAcoes";
+import GovCard, { dataGovTela } from "@/components/GovCard";
+import GovFiltrosGlobais from "@/components/GovFiltrosGlobais";
+import { CriarAlertaGov, DesativarAlertaGov } from "@/components/GovAcoes";
 import { exigirOperador } from "@/lib/tenant";
 import { pode } from "@/lib/rbac";
-import { moeda } from "@/lib/formatos";
-import { consultarGov, esquemaFiltrosGov, esquemaOportunidade, filtrarPaginaGov, MODALIDADES, UFS, type OportunidadeGov, type ResultadoGov } from "@/integracoes/gov";
-import { listarSalvasGov } from "@/servicos/gov";
+import { prisma } from "@/lib/prisma";
+import { esquemaBuscaGlobal } from "@/dominio/gov-catalogo";
+import { esquemaOportunidade } from "@/integracoes/gov";
+import { analisarGlobalGov, buscarGlobalGov, coberturaGov, type GrupoGov } from "@/servicos/gov-busca";
+import { listarRegrasGov } from "@/servicos/gov-alertas";
 
 export const dynamic = "force-dynamic";
-type SP = Record<string, string | string[] | undefined>;
-const abas = [["abertas", "Propostas abertas"], ["publicacoes", "Editais publicados"], ["planejamento", "Planejamento anual"], ["compras", "Pregões • Compras.gov.br"], ["pregoes", "Pregões • legado"], ["salvas", "Salvas da empresa"]] as const;
-function dia(v: string | null) {
-  if (!v || !Number.isFinite(new Date(v).getTime())) return "Não informado";
-  // Datas sem fuso são civis: não converter para o dia anterior no Brasil.
-  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${m[3]}/${m[2]}/${m[1]}${v.includes("T") ? ` • ${v.slice(11, 16)}` : ""}` : v;
-}
-
-export default async function CentralGov({ searchParams }: { searchParams: Promise<SP> }) {
+const secoes = [["base", "Busca global"], ["analise", "Análise consolidada"], ["salvas", "Salvas e acompanhamento"], ["alertas", "Meus alertas"], ["coleta", "Cobertura e atualização"]] as const;
+const valor = (v: { toString(): string } | null) => {
+  if (v === null) return "Não informado";
+  const [inteiro, casas = ""] = v.toString().split(".");
+  return `R$ ${inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${casas.padEnd(2, "0").slice(0, 2)}`;
+};
+export default async function CentralGovGlobal({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const op = await exigirOperador();
-  const brutos = await searchParams;
-  const sp: Record<string, string> = {};
-  for (const [chave, valor] of Object.entries(brutos)) if (typeof valor === "string" && valor !== "") sp[chave] = valor;
-  const fonte = abas.some(([id]) => id === sp.fonte) ? sp.fonte : "abertas";
-  const salvas = fonte === "salvas";
-  const planejamento = fonte === "planejamento";
-  const pregoes = fonte === "pregoes";
-  const compras = fonte === "compras";
-  const agora = new Date();
-  const hoje = agora.toISOString().slice(0, 10);
-  const inicio = sp.inicio ?? new Date(agora.getTime() - 7 * 86400000).toISOString().slice(0, 10);
-  const fim = sp.fim ?? (fonte === "abertas" ? `${agora.getFullYear() + 1}-12-31` : hoje);
-  const entrada = { ...sp, fonte: salvas ? "abertas" : fonte, inicio, fim, modalidade: fonte === "publicacoes" ? sp.modalidade ?? "6" : sp.modalidade };
-  const validacao = esquemaFiltrosGov.safeParse(entrada);
-  let erro: string | null = validacao.success ? null : validacao.error.issues.map(i => i.message).join(" • ");
-  let resultado: ResultadoGov | null = null;
-  let itens: OportunidadeGov[] = [];
-  const registrosSalvos = salvas ? await listarSalvasGov(op) : [];
-  if (salvas) {
-    itens = registrosSalvos.flatMap(s => { const v = esquemaOportunidade.safeParse(s.dados); return v.success ? [v.data] : []; });
-  } else if (validacao.success) {
-    try { resultado = await consultarGov(validacao.data); itens = resultado.itens; }
-    catch (e) { erro = e instanceof Error ? e.message : "Não foi possível consultar a fonte oficial."; }
-  }
-  const visiveis = validacao.success ? filtrarPaginaGov(itens, validacao.data) : [];
+  const bruto = await searchParams;
+  const sp = Object.fromEntries(Object.entries(bruto).filter(([, v]) => typeof v === "string" && v !== "")) as Record<string, string>;
+  if (sp.fonte === "salvas") redirect("/gov?visao=salvas");
+  if (["abertas", "publicacoes", "planejamento", "compras", "pregoes"].includes(sp.fonte)) redirect(`/gov/fontes?${new URLSearchParams(sp)}`);
+  const visao = secoes.some(([id]) => id === sp.visao) ? sp.visao : "base";
+  const parsed = esquemaBuscaGlobal.safeParse(sp);
+  const filtros = parsed.success ? parsed.data : esquemaBuscaGlobal.parse({});
   const editar = pode(op.papel, "demanda.editar");
-  const paginaUrl = (pagina: number) => { const q = new URLSearchParams({ ...sp, fonte, inicio, fim, pagina: String(pagina) }); return `/gov?${q}`; };
-
+  const paginaUrl = (pagina: number) => `/gov?${new URLSearchParams({ ...sp, pagina: String(pagina) })}`;
+  const coletas = await coberturaGov();
+  const erro = parsed.success ? null : parsed.error.issues.map(i => i.message).join(" • ");
+  const base = !erro && ["base", "analise"].includes(visao) ? await buscarGlobalGov(filtros) : null;
+  const analise = base && visao === "analise" ? await analisarGlobalGov(filtros) : null;
+  const regras = visao === "alertas" ? await listarRegrasGov(op) : [];
+  const salvasWhere = { empresaId: op.empresa.id };
+  const [salvas, totalSalvas] = visao === "salvas" ? await Promise.all([
+    prisma.oportunidadeGovSalva.findMany({ where: salvasWhere, include: { registro: true }, orderBy: [{ atualizadoEm: "desc" }, { id: "desc" }], skip: (filtros.pagina - 1) * 30, take: 30 }), prisma.oportunidadeGovSalva.count({ where: salvasWhere }),
+  ]) : [[], 0];
   return <AppShell operador={op} section="gov">
-    <div className="page-header"><div><h1>Central GOV</h1><p>Demandas públicas de todas as áreas • {op.empresa.nome}</p></div>
-      <a className="secondary-button" href="https://auth.avilaops.com/conta" target="_blank" rel="noopener noreferrer">Minha conta e acesso gov.br</a>
-    </div>
-    <nav aria-label="Fontes de demandas públicas" className="gov-tabs">{abas.map(([id, nome]) => <Link key={id} href={`/gov?fonte=${id}`} aria-current={fonte === id ? "page" : undefined}>{nome}</Link>)}</nav>
-    <section className="panel gov-intro">
-      <p>{salvas ? "Oportunidades e notas são compartilhadas somente nesta empresa. O retrato salvo não é atualizado automaticamente; confira o edital oficial antes de decidir." : planejamento ? "Intenções de contratação dos órgãos • cada plano contém diversos itens. Demanda planejada não significa edital ou proposta aberta." : pregoes ? "Histórico de pregões do módulo legado do Compras.gov.br. Confira a situação e as datas oficiais antes de participar." : compras ? "Pregões publicados no Compras.gov.br pela Lei 14.133. O prazo pode estar encerrado; confira a situação no portal oficial. A mesma contratação pode aparecer no PNCP." : fonte === "abertas" ? "Contratações informadas pelo PNCP como recebendo propostas, de todas as modalidades. Confira abertura, encerramento e situação no edital oficial." : "Publicações do PNCP no período e na modalidade selecionados. Publicação não significa que o prazo de propostas ainda esteja aberto."}</p>
-      <p className="muted">Consultas públicas não exigem login gov.br. Quando necessário, a identificação gov.br é gerenciada no Auth • ela não concede automaticamente acesso a APIs restritas.</p>
-    </section>
-    <form action="/gov" method="get" className="panel gov-filters">
-      <input type="hidden" name="fonte" value={fonte} />
-      {!salvas && <>
-        <label>Página na fonte<input name="pagina" type="number" min="1" max="100000" defaultValue={sp.pagina ?? "1"} /></label>
-        {fonte !== "abertas" && <label>{planejamento ? "Atualizações a partir de" : "Publicação a partir de"}<input name="inicio" type="date" defaultValue={inicio} required /></label>}
-        <label>{fonte === "abertas" ? "Encerramento até" : "Até"}<input name="fim" type="date" defaultValue={fim} required /></label>
-        {!pregoes && <label>CNPJ do órgão comprador<input name="cnpj" defaultValue={sp.cnpj} inputMode="numeric" pattern="[0-9]{14}" maxLength={14} placeholder="14 dígitos • opcional" /></label>}
-        {!planejamento && !pregoes && <>
-          <label>UF<select name="uf" defaultValue={sp.uf ?? ""}><option value="">Todo o Brasil</option>{UFS.map(uf => <option key={uf}>{uf}</option>)}</select></label>
-          {!compras && <label>Modalidade<select name="modalidade" defaultValue={fonte === "publicacoes" ? sp.modalidade ?? "6" : sp.modalidade ?? ""}>
-            {fonte !== "publicacoes" && <option value="">Todas as modalidades</option>}{MODALIDADES.map(([id, nome]) => <option key={id} value={id}>{nome}</option>)}
-          </select></label>}
-        </>}
-      </>}
-      <label>Texto do objeto{compras ? " • na fonte" : " • nesta página"}<input name="busca" defaultValue={sp.busca} maxLength={200} placeholder="Ex.: manutenção, software, transporte" /></label>
-      <label>Nome do órgão • nesta página<input name="orgao" defaultValue={sp.orgao} maxLength={200} /></label>
-      <label>Valor mínimo • nesta página<input type="number" name="minimo" min="0" step="0.01" defaultValue={sp.minimo} /></label>
-      <label>Valor máximo • nesta página<input type="number" name="maximo" min="0" step="0.01" defaultValue={sp.maximo} /></label>
-      <div className="page-actions"><button className="primary-button">Consultar</button><Link className="secondary-button" href={`/gov?fonte=${fonte}`}>Limpar filtros</Link></div>
-    </form>
-    {erro && <div role="alert" className="panel gov-error"><strong>Consulta não concluída</strong><p>{erro}</p><p>Nenhum resultado foi substituído por dados de exemplo. Ajuste os filtros ou tente novamente.</p><Link href={compras ? "/gov?fonte=abertas" : "/gov?fonte=compras"} className="secondary-button">Consultar outra fonte oficial</Link></div>}
-    {resultado && <section className="panel gov-coverage">
-      <strong>{resultado.total.toLocaleString("pt-BR")} {resultado.unidadePaginacao} informados pela fonte • página {resultado.pagina} de {resultado.paginas || 1}</strong>
-      <p>{visiveis.length} itens exibidos de {itens.length} recebidos nesta página{planejamento ? " de planos" : ""}. {compras ? "Texto do objeto também é consultado na fonte. Nome do órgão e valores filtram esta página." : "Texto, nome do órgão e valores filtram somente os itens recebidos; não representam uma busca nacional completa."}</p>
-      <p className="muted">Consultado em {new Date(resultado.consultadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} • <a href={resultado.endpoint} target="_blank" rel="noopener noreferrer">Requisição oficial</a></p>
-    </section>}
-    {salvas && <p>{registrosSalvos.length} salvas carregadas • limite de 500 mais recentes • {visiveis.length} exibidas pelos filtros.</p>}
-    {!erro && visiveis.length === 0 && <section className="panel"><p>{itens.length ? "Nenhum item desta página corresponde aos filtros locais. Navegue pelas próximas páginas ou amplie os filtros." : "Nenhum registro retornado para esta consulta."}</p></section>}
-    <div className="gov-results">{visiveis.map(item => {
-      const salva = registrosSalvos.find(s => s.fonte === item.fonte && s.externoId === item.id);
-      return <article className="panel gov-card" key={`${item.fonte}:${item.id}`}>
-        <div className="gov-card-top"><span>{item.fonte} • {item.tipo === "PLANEJAMENTO" ? `Planejamento ${item.ano}` : item.modalidade ?? "Contratação"}</span><strong>{item.valor === null ? "Valor não informado" : moeda(item.valor)}</strong></div>
-        <h2>{item.objeto}</h2><p>{item.orgao}{item.municipio ? ` • ${item.municipio}` : ""}{item.uf ? ` • ${item.uf}` : ""}</p>
-        <div className="gov-card-dates"><span>{item.tipo === "PLANEJAMENTO" ? "Data desejada" : "Prazo informado"} • {dia(item.prazo)}</span><span>Publicação • {dia(item.publicado)}</span></div>
-        <details><summary>Detalhes e origem</summary><dl className="kv">
-          <dt>Identificação oficial</dt><dd className="mono">{item.id}</dd><dt>CNPJ do órgão</dt><dd>{item.cnpj ?? "Não informado"}</dd>
-          <dt>Situação oficial</dt><dd>{item.situacao ?? "Não informada"}</dd><dt>Atualização na fonte</dt><dd>{dia(item.atualizado)}</dd>
-        </dl></details>
-        <div className="gov-card-actions"><a className="secondary-button" href={item.url} target="_blank" rel="noopener noreferrer">{item.fonte === "COMPRAS" ? "Consultar registro oficial" : "Abrir portal oficial e documentos"}</a>{editar && !salvas && <SalvarGov dados={item} />}</div>
-        {salva && (editar ? <AnalisarGov id={salva.id} notas={salva.notas} situacao={salva.situacao} /> : <p>Análise • {salva.situacao}<br />{salva.notas}</p>)}
-      </article>;
-    })}</div>
-    {resultado && resultado.paginas > 1 && <nav className="gov-pagination" aria-label="Paginação de resultados">
-      {resultado.pagina > 1 && <Link className="secondary-button" href={paginaUrl(resultado.pagina - 1)}>Página anterior</Link>}
-      <span>Página {resultado.pagina} de {resultado.paginas}</span>
-      {resultado.pagina < resultado.paginas && <Link className="secondary-button" href={paginaUrl(resultado.pagina + 1)}>Próxima página</Link>}
-    </nav>}
+    <div className="page-header"><div><h1>Central GOV</h1><p>Busca e análise de toda a base importada • {op.empresa.nome}</p></div><Link className="secondary-button" href="/gov/fontes">Consultar fontes em tempo real</Link></div>
+    <nav className="gov-tabs" aria-label="Central GOV">{secoes.map(([id, titulo]) => <Link key={id} href={`/gov?${new URLSearchParams({ ...sp, visao: id, pagina: "1" })}`} aria-current={visao === id ? "page" : undefined}>{titulo}</Link>)}</nav>
+    <section className="panel gov-intro"><p>A busca, os totais e os agrupamentos abrangem todos os registros indexados que correspondem aos filtros • não somente esta página. Não há recorte por atividade da empresa.</p><p className="muted">{coletas.every(c => c.habilitada) && coletas.length ? "Coleta contínua habilitada." : "Ativação da coleta pendente em pelo menos uma origem."} {coletas.filter(c => c.historica).some(c => !c.ciclos) ? "A carga histórica ainda está em formação; consulte a cobertura por origem." : "Confira a cobertura e a atualização de cada origem."} Registros PNCP encontrados em ambas as fontes contam uma única vez.</p></section>
+    {["base", "analise"].includes(visao) && <GovFiltrosGlobais filtros={filtros} visao={visao} />}
+    {erro && <div role="alert" className="panel">Filtros inválidos • {erro}</div>}
+    {base && <><div className="stat-grid" style={{ marginBottom: 16 }}><div className="stat"><small>Registros compatíveis na base</small><strong>{base.total.toLocaleString("pt-BR")}</strong></div>{base.totais.map(t => <div className="stat" key={t.tipo}><small>{t.tipo === "PLANEJAMENTO" ? "Planejamento" : t.tipo === "PREGAO" ? "Pregões legados" : "Contratações"} • {Number(t.quantidade).toLocaleString("pt-BR")}</small><strong style={{ fontSize: 18 }}>{valor(t.valor)}</strong><small>{Number(t.comValor)} com valor • {Number(t.quantidade - t.comValor)} sem valor</small></div>)}</div><p className="muted">Valores estimados conhecidos são apresentados por etapa. Planejamentos e contratações não são somados como despesas independentes.</p></>}
+    {base && visao === "base" && <><div className="gov-results">{base.itens.map(i => <GovCard key={i.id} item={esquemaOportunidade.parse(i.dados)} fontes={i.fontes} conferidoEm={i.conferidoEm} editar={editar} />)}</div>{!base.total && <section className="panel"><p>Nenhum registro indexado corresponde a estes filtros. A carga inicial pode estar em andamento; confira a cobertura e a consulta direta às fontes.</p></section>}<Paginacao pagina={filtros.pagina} paginas={base.paginas} href={paginaUrl} />{editar && <section className="panel"><h2>Acompanhar esta busca</h2><p>Notificações internas para novas publicações posteriores à criação da regra e compatíveis com os filtros.</p><CriarAlertaGov filtros={filtros} /></section>}</>}
+    {analise && <div className="grid-2">{Object.entries(analise).map(([nome, grupos]) => <Agrupamento key={nome} titulo={({ orgaos: "Órgãos", regioes: "Regiões", categorias: "Categorias do objeto", modalidades: "Modalidades", periodos: "Períodos de publicação" } as Record<string, string>)[nome]} grupos={grupos} />)}</div>}
+    {visao === "salvas" && <><section className="panel gov-intro"><p>{totalSalvas} oportunidades salvas nesta empresa. Retratos são atualizados automaticamente quando as fontes respondem. Suas notas e decisões são preservadas. Alertas de alteração e de prazos em até 48 horas chegam às notificações do responsável pelo salvamento.</p></section><div className="gov-results">{salvas.map(s => <GovCard key={s.id} item={esquemaOportunidade.parse(s.dados)} fontes={s.registro?.fontes} conferidoEm={s.registro?.conferidoEm} editar={editar} salva={s} />)}</div><Paginacao pagina={filtros.pagina} paginas={Math.ceil(totalSalvas / 30)} href={paginaUrl} /></>}
+    {visao === "alertas" && <><section className="panel"><p>Regras pessoais para {op.empresa.nome}. Alertas são internos ao EngOps; não são enviados emails ou mensagens externas.</p><Link href="/notificacoes">Abrir minhas notificações</Link></section>{regras.map(r => <section className="panel" key={r.id}><h2>{r.nome}</h2><p>Criado em {dataGovTela(r.criadoEm)}</p><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{JSON.stringify(r.filtros, null, 2)}</pre>{editar && <DesativarAlertaGov id={r.id} />}</section>)}{!regras.length && <p>Crie um alerta a partir dos filtros da busca global.</p>}</>}
+    {visao === "coleta" && <div className="gov-results">{coletas.map(c => <section className="panel" key={c.id}><h2>{c.id} • {c.historica ? "Carga histórica" : "Atualização recorrente"}</h2><dl className="kv"><dt>Estado</dt><dd>{c.habilitada ? c.ultimoErro ? "Aguardando nova tentativa" : "Ativa" : "Aguardando ativação"}</dd><dt>Desde</dt><dd>{dataGovTela(c.inicio)}</dd><dt>Cobertura concluída até</dt><dd>{dataGovTela(c.cobertoAte)}</dd><dt>Última página bem-sucedida</dt><dd>{dataGovTela(c.ultimoSucessoEm)}</dd><dt>Páginas processadas</dt><dd>{c.paginas}</dd><dt>Registros recebidos • inclui revisitas</dt><dd>{c.registros}</dd><dt>Ciclos concluídos</dt><dd>{c.ciclos}</dd><dt>Próxima tentativa</dt><dd>{dataGovTela(c.proximaEm)}</dd></dl>{c.ultimoErro && <p role="status">Fonte com falha • {c.ultimoErro}. O cursor e os dados anteriores foram preservados.</p>}</section>)}</div>}
   </AppShell>;
+}
+function Paginacao({ pagina, paginas, href }: { pagina: number; paginas: number; href: (p: number) => string }) {
+  return paginas > 1 ? <nav className="gov-pagination" aria-label="Paginação global">{pagina > 1 && <Link className="secondary-button" href={href(pagina - 1)}>Anterior</Link>}<span>Página {pagina} de {paginas}</span>{pagina < paginas && <Link className="secondary-button" href={href(pagina + 1)}>Próxima</Link>}</nav> : null;
+}
+function Agrupamento({ titulo, grupos }: { titulo: string; grupos: GrupoGov[] }) {
+  const maior = Math.max(...grupos.map(g => Number(g.quantidade)), 1);
+  return <section className="panel"><h2>{titulo} • 20 maiores grupos</h2><p className="muted">Quantidade em todas as etapas filtradas. Valor abaixo considera somente contratações, sem somar planejamento ou legado.</p><div className="gov-groups">{grupos.map(g => <div key={g.grupo}><strong>{g.grupo}</strong><p>{Number(g.quantidade).toLocaleString("pt-BR")} registros • {valor(g.valor)}</p><meter min={0} max={maior} value={Number(g.quantidade)} aria-label={`${g.grupo}: ${g.quantidade} registros`} style={{ width: "100%" }} /></div>)}</div></section>;
 }

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { umCiclo } from "@/automation/core/fila";
 import { entregarEventos } from "@/automation/outbox";
 import "@/automation/workflows";
+import { iniciarColetaGov } from "@/automation/gov-coleta";
 
 /**
  * Processador de jobs dentro do próprio processo do Next. Um container só,
@@ -16,6 +17,7 @@ let ligado = false;
 export function iniciarWorker() {
   if (ligado) return;
   ligado = true;
+  iniciarColetaGov();
   const workerId = `worker-${randomUUID().slice(0, 8)}`;
   console.log(`[engops] worker ${workerId} ligado`);
 

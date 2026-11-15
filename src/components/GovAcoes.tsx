@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { analisarGovAction, salvarGovAction } from "@/app/acoes/gov";
+import { analisarGovAction, salvarGovAction, criarAlertaGovAction, removerAlertaGovAction } from "@/app/acoes/gov";
+import type { BuscaGlobalGov } from "@/dominio/gov-catalogo";
 import type { OportunidadeGov } from "@/integracoes/gov";
 
 export function SalvarGov({ dados }: { dados: OportunidadeGov }) {
@@ -24,4 +25,19 @@ export function AnalisarGov({ id, notas, situacao }: { id: string; notas: string
     <button className="primary-button" disabled={pendente}>{pendente ? "Atualizando…" : "Atualizar análise"}</button>
     <p role="status">{estado.erro ?? estado.ok}</p>
   </form>;
+}
+
+export function CriarAlertaGov({ filtros }: { filtros: BuscaGlobalGov }) {
+  const [estado, acao, pendente] = useActionState(criarAlertaGovAction, {});
+  return <form action={acao} className="gov-analysis">
+    <input type="hidden" name="filtros" value={JSON.stringify(filtros)} />
+    <label>Nome do alerta para estes filtros<input name="nome" required minLength={2} maxLength={120} placeholder="Ex.: serviços em São Paulo" /></label>
+    <button className="secondary-button" disabled={pendente}>{pendente ? "Criando…" : "Avisar sobre novas oportunidades"}</button>
+    <p role="status">{estado.erro ?? estado.ok}</p>
+  </form>;
+}
+
+export function DesativarAlertaGov({ id }: { id: string }) {
+  const [estado, acao, pendente] = useActionState(removerAlertaGovAction, {});
+  return <form action={acao}><input type="hidden" name="id" value={id} /><button className="secondary-button" disabled={pendente}>Desativar alerta</button><span role="status">{estado.erro ?? estado.ok}</span></form>;
 }

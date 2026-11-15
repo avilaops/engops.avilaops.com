@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Operador } from "@/lib/tenant";
-const mocks = vi.hoisted(() => ({ salva: { upsert: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() }, auditar: vi.fn() }));
-vi.mock("@/lib/prisma", () => ({ prisma: { oportunidadeGovSalva: mocks.salva } }));
+const mocks = vi.hoisted(() => ({ registro: { findUnique: vi.fn() }, salva: { upsert: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() }, auditar: vi.fn() }));
+vi.mock("@/lib/prisma", () => ({ prisma: { oportunidadeGovSalva: mocks.salva, govRegistro: mocks.registro } }));
 vi.mock("@/lib/auditoria", () => ({ auditar: mocks.auditar }));
 import { listarSalvasGov, salvarOportunidadeGov, atualizarSalvaGov } from "@/servicos/gov";
 const op = { empresa: { id: "empresa-a" }, email: "teste@example.org", papel: "ADMIN" } as Operador;

@@ -55,6 +55,8 @@ model Empresa {
   siopRetornos SiopRetorno[]
   siopExecucoes SiopExecucaoOrcamentariaPac[]
   oportunidadesGov OportunidadeGovSalva[]
+  regrasGov GovRegraAlerta[]
+  avisosGov GovAviso[]
 
   @@map("empresas")
 }
@@ -71,11 +73,110 @@ model OportunidadeGovSalva {
   salvoPor   String
   criadoEm   DateTime @default(now())
   atualizadoEm DateTime @updatedAt
+  registroId String?
+  revisaoVista Int @default(0)
+  proximaConferenciaEm DateTime @default(now())
+  erroConferencia String?
   empresa Empresa @relation(fields: [empresaId], references: [id])
+  registro GovRegistro? @relation(fields: [registroId], references: [id], onDelete: SetNull)
 
   @@unique([empresaId, fonte, externoId])
   @@index([empresaId, atualizadoEm])
+  @@index([registroId])
+  @@index([externoId, fonte])
+  @@index([proximaConferenciaEm])
   @@map("gov_oportunidades_salvas")
+}
+
+/// Dados públicos compartilhados; notas, regras e salvos nunca são globais.
+model GovRegistro {
+  id String @id
+  externoId String
+  tipo String
+  fontes String[]
+  objeto String @db.Text
+  orgao String
+  cnpj String?
+  uf String?
+  regiao String?
+  categoria String?
+  modalidade String?
+  poder String?
+  esfera String?
+  valor Decimal? @db.Decimal(20, 2)
+  publicado DateTime?
+  prazo DateTime?
+  atualizadoFonte DateTime?
+  dados Json
+  busca String @db.Text
+  fingerprint String
+  revisao Int @default(1)
+  primeiroVistoEm DateTime @default(now())
+  conferidoEm DateTime @default(now())
+  proximaVerificacaoEm DateTime @default(now())
+  erroConferencia String?
+  salvas OportunidadeGovSalva[]
+
+  @@index([publicado, id])
+  @@index([prazo])
+  @@index([uf, publicado])
+  @@index([cnpj, publicado])
+  @@index([tipo, publicado])
+  @@index([regiao, publicado])
+  @@index([categoria])
+  @@index([conferidoEm])
+  @@index([proximaVerificacaoEm])
+  @@map("gov_registros")
+}
+
+model GovColeta {
+  id String @id
+  fonte String
+  historica Boolean @default(false)
+  inicio DateTime
+  cursor Json
+  habilitada Boolean @default(false)
+  proximaEm DateTime @default(now())
+  reservaAte DateTime?
+  reservadoPor String?
+  paginas Int @default(0)
+  registros Int @default(0)
+  falhas Int @default(0)
+  ultimoErro String?
+  ultimoSucessoEm DateTime?
+  cobertoAte DateTime?
+  ciclos Int @default(0)
+  atualizadoEm DateTime @updatedAt
+
+  @@index([habilitada, proximaEm, reservaAte])
+  @@map("gov_coletas")
+}
+
+model GovRegraAlerta {
+  id String @id @default(cuid())
+  empresaId String
+  email String
+  nome String
+  filtros Json
+  ativa Boolean @default(true)
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId, email, ativa])
+  @@map("gov_regras_alerta")
+}
+
+model GovAviso {
+  id String @id
+  empresaId String
+  registroId String
+  email String
+  tipo String
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId, criadoEm])
+  @@map("gov_avisos")
 }
 
 /// Papéis dentro de uma empresa. São o RBAC do produto; o SSO só diz quem a

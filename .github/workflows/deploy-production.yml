@@ -21,6 +21,22 @@ jobs:
     name: Validar tipos, lint, dados falsos e testes
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: engops_test
+          POSTGRES_USER: engops_test
+          POSTGRES_PASSWORD: isolated_test_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U engops_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://engops_test:isolated_test_only@localhost:5432/engops_test
+      GOV_TEST_DATABASE_URL: postgresql://engops_test:isolated_test_only@localhost:5432/engops_test
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -31,6 +47,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prisma generate
+      - run: npx prisma migrate deploy
       - run: npm run conferir
   image:
     needs: verify
