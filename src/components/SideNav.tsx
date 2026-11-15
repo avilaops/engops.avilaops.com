@@ -6,6 +6,7 @@ import { navegacaoDoPapel, type Secao } from "@/lib/navegacao";
 import { AnimatedSidebarGroup, AnimatedSidebarGroupContent, AnimatedSidebarGroupLabel, AnimatedSidebarMenu, AnimatedSidebarMenuButton, AnimatedSidebarMenuItem } from "@/components/ui/animated-sidebar";
 
 const icones: Record<Secao, LucideIcon> = {
+  gov: Building2,
   demandas: ClipboardList, "nova-demanda": Plus, automacoes: Workflow,
   notificacoes: Bell, aprovacoes: CircleCheck, pendencias: TriangleAlert,
   prazos: CalendarClock, clientes: UsersRound, relatorios: ChartNoAxesCombined,
