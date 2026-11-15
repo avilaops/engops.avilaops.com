@@ -5,10 +5,12 @@ const { execFileSync } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { chromium } = require(process.env.GOV_PLAYWRIGHT_MODULE || "playwright");
-const remoto = `const {PrismaClient}=require('@prisma/client'); const jwt=require('jsonwebtoken'); const db=new PrismaClient();
+const remoto = `const {PrismaClient}=require('@prisma/client'); const {createHmac}=require('node:crypto'); const db=new PrismaClient();
 (async()=>{ const empresa=await db.empresa.findFirstOrThrow({where:{cnpj:'67.954.417/0001-64'},select:{id:true,nome:true,cnpj:true}});
 const outra=await db.empresa.findFirst({where:{id:{not:empresa.id},ativo:true},select:{id:true}});
-const token=jwt.sign({sub:'verificacao-proprietario',email:'nicolas@avilaops.com',nome:'Nicolas',papel:'ADMIN',foto:null},process.env.SSO_JWT_SECRET,{issuer:'auth.avilaops.com',expiresIn:'10m',algorithm:'HS256'});
+const codificar=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
+const corpo=codificar({alg:'HS256',typ:'JWT'})+'.'+codificar({sub:'verificacao-proprietario',email:'nicolas@avilaops.com',nome:'Nicolas',papel:'ADMIN',foto:null,iss:'auth.avilaops.com',iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+600});
+const token=corpo+'.'+createHmac('sha256',process.env.SSO_JWT_SECRET).update(corpo).digest('base64url');
 console.log(JSON.stringify({empresa,outra,token})); await db.$disconnect(); })().catch(()=>{process.exitCode=1});`;
 async function verificar() {
   const resultado = JSON.parse(execFileSync("ssh", ["-o", "BatchMode=yes", "applications", "docker exec -i -w /app engops-avilaops-com-web node"], { input: remoto, encoding: "utf8", timeout: 45000, windowsHide: true }));
