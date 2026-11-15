@@ -7,6 +7,7 @@ import type { NomeIcone } from "@/components/ui/Icones";
  * folha "Mais" do celular. Tela nova entra aqui e aparece nos dois.
  */
 export type Secao =
+  | "gov"
   | "demandas"
   | "nova-demanda"
   | "automacoes"
@@ -24,6 +25,7 @@ export type ItemNavegacao = { href: string; label: string; section: Secao };
 export type GrupoNavegacao = { label: string; items: ItemNavegacao[] };
 
 export const iconeDaSecao: Record<Secao, NomeIcone> = {
+  gov: "busca",
   demandas: "demandas", "nova-demanda": "adicionar", automacoes: "automacoes",
   notificacoes: "sino", aprovacoes: "aprovacoes", pendencias: "alerta",
   prazos: "prazos", clientes: "pessoas", relatorios: "grafico", equipe: "pessoas",
@@ -34,6 +36,7 @@ export const navegacao: GrupoNavegacao[] = [
   {
     label: "Operação",
     items: [
+      { href: "/gov", label: "Central GOV", section: "gov" },
       { href: "/demandas", label: "Demandas", section: "demandas" },
       { href: "/demandas/nova", label: "Nova demanda", section: "nova-demanda" },
       { href: "/prazos", label: "Prazos", section: "prazos" },

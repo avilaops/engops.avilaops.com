@@ -54,8 +54,28 @@ model Empresa {
   siopConsultas SiopConsulta[]
   siopRetornos SiopRetorno[]
   siopExecucoes SiopExecucaoOrcamentariaPac[]
+  oportunidadesGov OportunidadeGovSalva[]
 
   @@map("empresas")
+}
+
+/// Retrato de uma oportunidade pública salvo para análise na empresa atual.
+model OportunidadeGovSalva {
+  id         String   @id @default(cuid())
+  empresaId  String
+  fonte      String
+  externoId  String
+  dados      Json
+  notas      String   @default("")
+  situacao   String   @default("SALVA")
+  salvoPor   String
+  criadoEm   DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@unique([empresaId, fonte, externoId])
+  @@index([empresaId, atualizadoEm])
+  @@map("gov_oportunidades_salvas")
 }
 
 /// Papéis dentro de uma empresa. São o RBAC do produto; o SSO só diz quem a

@@ -1,0 +1,27 @@
+"use client";
+
+import { useActionState } from "react";
+import { analisarGovAction, salvarGovAction } from "@/app/acoes/gov";
+import type { OportunidadeGov } from "@/integracoes/gov";
+
+export function SalvarGov({ dados }: { dados: OportunidadeGov }) {
+  const [estado, acao, pendente] = useActionState(salvarGovAction, {});
+  return <form action={acao}>
+    <input type="hidden" name="dados" value={JSON.stringify(dados)} />
+    <button className="secondary-button" disabled={pendente}>{pendente ? "Salvando…" : "Salvar oportunidade"}</button>
+    <p role="status">{estado.erro ?? estado.ok}</p>
+  </form>;
+}
+
+export function AnalisarGov({ id, notas, situacao }: { id: string; notas: string; situacao: string }) {
+  const [estado, acao, pendente] = useActionState(analisarGovAction, {});
+  return <form action={acao} className="gov-analysis">
+    <input type="hidden" name="id" value={id} />
+    <label>Situação da análise<select name="situacao" defaultValue={situacao}>
+      <option value="SALVA">Salva</option><option value="EM_ANALISE">Em análise</option><option value="INTERESSE">Tenho interesse</option><option value="DESCARTADA">Descartada</option>
+    </select></label>
+    <label>Notas da empresa<textarea name="notas" defaultValue={notas} maxLength={10000} rows={3} /></label>
+    <button className="primary-button" disabled={pendente}>{pendente ? "Atualizando…" : "Atualizar análise"}</button>
+    <p role="status">{estado.erro ?? estado.ok}</p>
+  </form>;
+}
