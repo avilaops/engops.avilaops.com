@@ -1,4 +1,4 @@
-import type { PapelMembro } from "@prisma/client";
+import { Prisma, type PapelMembro } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auditar } from "@/lib/auditoria";
@@ -19,20 +19,45 @@ export const esquemaEmpresa = z.object({
   slug: z.string().trim().max(40).optional().or(z.literal("")).transform((v) => v || undefined),
 });
 
-export async function criarEmpresa(usuario: string, dados: z.infer<typeof esquemaEmpresa>, primeiroMembro?: { email: string; nome: string }) {
-  let slug = dados.slug ?? slugDe(dados.nome);
-  if (!slug) slug = `empresa-${Date.now().toString(36)}`;
-  let tentativa = slug;
-  for (let i = 2; await prisma.empresa.findUnique({ where: { slug: tentativa } }); i++) tentativa = `${slug}-${i}`;
+export async function criarEmpresa(
+  usuario: string,
+  dados: z.infer<typeof esquemaEmpresa>,
+  primeiroMembro?: { email: string; nome: string },
+  opcoes: { somenteSemVinculo?: boolean } = {},
+) {
+  const base = dados.slug ?? (slugDe(dados.nome) || `empresa-${Date.now().toString(36)}`);
 
-  return prisma.$transaction(async (tx) => {
-    const e = await tx.empresa.create({ data: { nome: dados.nome, cnpj: dados.cnpj, slug: tentativa } });
-    if (primeiroMembro) {
-      await tx.membro.create({ data: { empresaId: e.id, email: primeiroMembro.email.toLowerCase(), nome: primeiroMembro.nome, papel: "ADMIN" } });
+  for (let tentativa = 1; tentativa <= 100; tentativa++) {
+    const sufixo = tentativa === 1 ? "" : `-${tentativa}`;
+    const slug = `${base.slice(0, 40 - sufixo.length)}${sufixo}`;
+    try {
+      return await prisma.$transaction(async (tx) => {
+        if (opcoes.somenteSemVinculo && primeiroMembro) {
+          const vinculo = await tx.membro.findFirst({
+            where: { email: primeiroMembro.email.toLowerCase(), ativo: true, empresa: { ativo: true } },
+            select: { id: true },
+          });
+          if (vinculo) throw new Error("Sua conta já está vinculada a uma empresa.");
+        }
+
+        const e = await tx.empresa.create({ data: { nome: dados.nome, cnpj: dados.cnpj, slug } });
+        if (primeiroMembro) {
+          await tx.membro.create({ data: { empresaId: e.id, email: primeiroMembro.email.toLowerCase(), nome: primeiroMembro.nome, papel: "ADMIN" } });
+        }
+        await auditar({ empresaId: e.id, usuario, acao: "empresa.criada", objetoTipo: "Empresa", objetoId: e.id, depois: { nome: e.nome, slug: e.slug } }, tx);
+        return e;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (erro) {
+      if (erro instanceof Prisma.PrismaClientKnownRequestError) {
+        const alvo = erro.meta?.target;
+        const slugDuplicado = erro.code === "P2002" && (Array.isArray(alvo) ? alvo.includes("slug") : typeof alvo === "string" && alvo.includes("slug"));
+        if (slugDuplicado || (opcoes.somenteSemVinculo && erro.code === "P2034")) continue;
+      }
+      throw erro;
     }
-    await auditar({ empresaId: e.id, usuario, acao: "empresa.criada", objetoTipo: "Empresa", objetoId: e.id, depois: { nome: e.nome, slug: e.slug } }, tx);
-    return e;
-  });
+  }
+
+  throw new Error("Não foi possível reservar um identificador para a empresa. Tente novamente.");
 }
 
 export const esquemaMembro = z.object({
