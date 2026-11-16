@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sheet from "@/components/ui/Sheet";
 import type { PapelMembro } from "@prisma/client";
 import { navegacaoDoPapel } from "@/lib/navegacao";
+import type { ModuloEngOps } from "@/dominio/modulos";
 
 type Item = { rotulo: string; href: string; atalho?: string };
 
@@ -12,7 +13,7 @@ type Item = { rotulo: string; href: string; atalho?: string };
  * Ctrl/Cmd+K. Ir para uma tela, abrir uma demanda pelo código ou buscar.
  * Digitar "ENG-0012" abre direto; qualquer outro texto vira busca global.
  */
-export default function CommandPalette({ papel }: { papel: PapelMembro }) {
+export default function CommandPalette({ papel, modulos = [] }: { papel: PapelMembro; modulos?: ModuloEngOps[] }) {
   const [aberto, setAberto] = useState(false);
   const [texto, setTexto] = useState("");
   const [indice, setIndice] = useState(0);
@@ -47,7 +48,7 @@ export default function CommandPalette({ papel }: { papel: PapelMembro }) {
       { rotulo: "Ver atrasadas", href: "/demandas?prazo=atrasadas" },
       { rotulo: "Prazos de hoje", href: "/demandas?prazo=hoje" },
       { rotulo: "Visão Kanban", href: "/demandas?visao=kanban" },
-      ...navegacaoDoPapel(papel).flatMap((g) => g.items.map((i) => ({ rotulo: i.label, href: i.href }))),
+      ...navegacaoDoPapel(papel, modulos).flatMap((g) => g.items.map((i) => ({ rotulo: i.label, href: i.href }))),
     ];
     const t = texto.trim();
     if (!t) return base.slice(0, 12);
@@ -57,7 +58,7 @@ export default function CommandPalette({ papel }: { papel: PapelMembro }) {
     const normalizar = (valor: string) => valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const n = normalizar(t);
     return [...busca, ...base.filter((i) => normalizar(i.rotulo).includes(n))].slice(0, 12);
-  }, [texto, papel]);
+  }, [texto, papel, modulos]);
 
   useEffect(() => {
     if (aberto) document.getElementById(`navigation-option-${indice}`)?.scrollIntoView({ block: "nearest" });

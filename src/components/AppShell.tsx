@@ -16,7 +16,7 @@ export default function AppShell({ operador, section, children }: { operador: Op
   return (
     <AnimatedSidebarProvider className="engops-frame" style={{ "--sidebar-width": "15.5rem" }}>
       <a href="#conteudo" className="skip-link">Pular para o conteúdo</a>
-      <WorkspaceSidebar section={section} operador={{ nome: operador.nome, papel: operador.papel, empresa: operador.empresa.nome, dono: operador.dono && !operador.membroId }} />
+      <WorkspaceSidebar section={section} operador={{ nome: operador.nome, papel: operador.papel, empresa: operador.empresa.nome, dono: operador.dono && !operador.membroId, modulos: operador.modulos }} />
       <AnimatedSidebarInset className="engops-workspace" id="conteudo" tabIndex={-1}>
         <header className="engops-toolbar">
           <div className="engops-breadcrumb">
@@ -34,7 +34,7 @@ export default function AppShell({ operador, section, children }: { operador: Op
         <div className="main-canvas">{children}</div>
       </AnimatedSidebarInset>
       <MobileNav section={section} papel={operador.papel} />
-      <CommandPalette papel={operador.papel} />
+      <CommandPalette papel={operador.papel} modulos={operador.modulos} />
     </AnimatedSidebarProvider>
   );
 }
