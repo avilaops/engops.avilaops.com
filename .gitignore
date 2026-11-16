@@ -10,3 +10,4 @@ standalone.tgz
 storage/
 # Evidências locais de navegador; sem cookies ou tokens.
 reports/central-gov/
+reports/integracoes/

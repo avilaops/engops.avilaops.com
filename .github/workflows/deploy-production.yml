@@ -49,6 +49,9 @@ jobs:
       - run: npx prisma generate
       - run: npx prisma migrate deploy
       - run: npm run conferir
+      - run: npx vitest run tests/integration/integracoes-banco.test.ts
+        env:
+          INTEGRACOES_TEST_DATABASE_URL: postgresql://engops_test:isolated_test_only@localhost:5432/engops_test
   image:
     needs: verify
     permissions:

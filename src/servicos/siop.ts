@@ -23,10 +23,17 @@ export async function obterConfiguracaoSiop(op: Operador, ambiente: AmbienteSiop
 export async function configurarSiop(op: Operador, entrada: unknown) {
   if (!pode(op.papel, "empresa.administrar")) throw new ErroSiop("PROIBIDO", "Somente administrador pode configurar a conexão SIOP");
   const dados = configuracaoSiopSchema.parse(entrada);
-  if (dados.habilitada && !/^[a-fA-F0-9]{32}$/.test(process.env[dados.senhaEnvRef] ?? "")) {
-    throw new ErroSiop("CREDENCIAL_AUSENTE", "A referência protegida não contém uma credencial MD5 válida");
-  }
   await prisma.$transaction(async (tx) => {
+    // A referência global só pode ser vinculada pelo dono. Um administrador
+    // mantém a associação atual da empresa/ambiente, sem sondar outros segredos.
+    await tx.$queryRaw`SELECT id FROM siop_credenciais WHERE "empresaId" = ${op.empresa.id} AND ambiente = ${dados.ambiente}::"AmbienteSiop" FOR UPDATE`;
+    const atual = await tx.siopCredencial.findUnique({ where: { empresaId_ambiente: { empresaId: op.empresa.id, ambiente: dados.ambiente } } });
+    if (!op.dono && atual?.senhaEnvRef !== dados.senhaEnvRef) {
+      throw new ErroSiop("PROIBIDO", "O dono da plataforma precisa vincular a referência protegida a esta empresa e ambiente");
+    }
+    if (dados.habilitada && !/^[a-fA-F0-9]{32}$/.test(process.env[dados.senhaEnvRef] ?? "")) {
+      throw new ErroSiop("CREDENCIAL_AUSENTE", "A referência protegida não contém uma credencial MD5 válida");
+    }
     const config = await tx.siopCredencial.upsert({
       where: { empresaId_ambiente: { empresaId: op.empresa.id, ambiente: dados.ambiente } },
       create: { ...dados, empresaId: op.empresa.id }, update: dados,

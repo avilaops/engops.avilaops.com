@@ -8,6 +8,7 @@ import type { proximaAcao } from "@/dominio/checklist";
 
 type Props = {
   demandaId: string;
+  demandaCodigo: string;
   proxima: ReturnType<typeof proximaAcao>;
   bloqueios: number;
   aprovacao: { id: string; tipo: string } | null;
@@ -21,7 +22,7 @@ type Props = {
  * O cartão "Próxima ação". A pessoa vê processo, não robô: uma frase e um
  * botão. O que o botão faz por baixo (job, workflow, adapter) não aparece.
  */
-export default function ProximaAcao({ demandaId, proxima, bloqueios, aprovacao, jobAtivo, modo, podePreparar, podeAprovar }: Props) {
+export default function ProximaAcao({ demandaId, demandaCodigo, proxima, bloqueios, aprovacao, jobAtivo, modo, podePreparar, podeAprovar }: Props) {
   const { executar, pendente, toast } = useAcao();
   const alerta = bloqueios > 0 || proxima.acao === "resolver" || proxima.acao === "documentos" || proxima.acao === "completar";
 
@@ -43,7 +44,8 @@ export default function ProximaAcao({ demandaId, proxima, bloqueios, aprovacao, 
   } else if (proxima.acao === "resolver") {
     botao = <a href="#pendencias" className="primary-button">Ver divergências</a>;
   } else if (proxima.acao === "gerar-rae" || proxima.acao === "executar-siopi") {
-    botao = <span className="badge">disponível na próxima fase</span>;
+    const sistema = proxima.acao === "gerar-rae" ? "rae" : "siopi";
+    botao = <Link className="secondary-button" href={`/automacoes/operacao/${sistema}?busca=${encodeURIComponent(demandaCodigo)}`}>Acompanhar {sistema === "rae" ? "RAE" : "SIOPI"}</Link>;
   }
 
   return (

@@ -3,15 +3,20 @@ import { randomUUID } from "node:crypto";
 import { createServer, createConnection } from "node:net";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { appendFileSync, mkdirSync } from "node:fs";
 
 const raiz = fileURLToPath(new URL("../", import.meta.url));
+const pastaEvidencia = path.join(raiz, "reports", process.argv.includes("--integracoes") ? "integracoes" : "central-gov");
+mkdirSync(pastaEvidencia, { recursive: true });
+const log = path.join(pastaEvidencia, `banco-${Date.now()}.log`);
 const ssh = comando => execFileSync("ssh", ["-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "applications", comando], { encoding: "utf8", timeout: 120000, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
 const nome = `engops_gov_test_${randomUUID().replaceAll("-", "").slice(0, 10)}`;
 let tunel, criado = false, segredo = "";
 const sanear = mensagem => String(mensagem).split(segredo || "[sem segredo]").join("[protegido]").replace(/postgres(?:ql)?:\/\/[^\s]+/g, "[conexão protegida]");
 function executar(arquivo, args, env) {
   const r = spawnSync(process.execPath, [arquivo, ...args], { cwd: raiz, env: { ...process.env, ...env }, encoding: "utf8", timeout: 600000, windowsHide: true });
-  console.log(sanear(`${r.stdout ?? ""}\n${r.stderr ?? ""}`).trim());
+  const saida = sanear(`${r.stdout ?? ""}\n${r.stderr ?? ""}`).trim();
+  appendFileSync(log, saida + "\n"); console.log(saida);
   if (r.status !== 0) throw new Error(`Verificação falhou • ${path.basename(arquivo)} • ${r.status}`);
 }
 try {
@@ -31,10 +36,12 @@ try {
   }
   if (!pronto) throw new Error("Túnel de teste não iniciou");
   conexao.hostname = "127.0.0.1"; conexao.port = String(porta); conexao.pathname = `/${nome}`;
-  const env = { DATABASE_URL: conexao.toString(), GOV_TEST_DATABASE_URL: conexao.toString() };
+  const integracoes = process.argv.includes("--integracoes");
+  const env = { DATABASE_URL: conexao.toString(), [integracoes ? "INTEGRACOES_TEST_DATABASE_URL" : "GOV_TEST_DATABASE_URL"]: conexao.toString() };
   executar(path.join(raiz, "node_modules/prisma/build/index.js"), ["migrate", "deploy"], env);
   executar(path.join(raiz, "node_modules/prisma/build/index.js"), ["migrate", "diff", "--from-schema-datasource", "prisma/schema.prisma", "--to-schema-datamodel", "prisma/schema.prisma", "--exit-code"], env);
-  executar(path.join(raiz, "node_modules/vitest/vitest.mjs"), ["run", "tests/integration/gov-banco.test.ts"], env);
+  executar(path.join(raiz, "node_modules/vitest/vitest.mjs"), ["run", integracoes ? "tests/integration/integracoes-banco.test.ts" : "tests/integration/gov-banco.test.ts"], env);
+  if (integracoes && process.argv.includes("--navegador")) executar(path.join(raiz, "scripts/verificar-integracoes-isolado.cjs"), [], env);
 } catch (e) { console.error(sanear(e.message)); process.exitCode = 1; }
 finally {
   try {

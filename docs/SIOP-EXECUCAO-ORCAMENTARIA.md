@@ -113,7 +113,7 @@ para configuração, histórico, retorno, registros paginados e totais.
 | Rota | Método | Operação |
 | --- | --- | --- |
 | /api/integracoes/siop/configuracao | GET | Metadados da configuração e indicação da disponibilidade da credencial, sem o valor do segredo. |
-| /api/integracoes/siop/configuracao | POST | Administrador configura usuario, email, perfil, ambiente, senhaEnvRef e habilitada. |
+| /api/integracoes/siop/configuracao | POST | Administrador configura usuario, email, perfil, ambiente e habilitada. Somente o dono define ou troca senhaEnvRef; o administrador mantém a referência já vinculada à empresa e ao ambiente. |
 | /api/integracoes/siop/consultas | GET | Histórico da empresa, por ambiente; 50 consultas por página. |
 | /api/integracoes/siop/consultas | POST | Executa consultarPac para anoExercicio, com ambiente padrão HOMOLOGACAO. |
 | /api/integracoes/siop/consultas/[id] | GET | Retorno e registros da consulta da empresa; 100 registros por página, total informado. |
@@ -121,7 +121,9 @@ para configuração, histórico, retorno, registros paginados e totais.
 GET aceita ambiente quando aplicável e pagina nas listagens. POST exige
 sessão, papel autorizado e Origin igual ao site configurado. As consultas
 externas exigem automacao.executar; a leitura permite relatorio.ver ou
- automacao.executar. Configuração exige empresa.administrar.
+ automacao.executar. Configuração exige empresa.administrar. A associação da
+referência protegida exige adicionalmente dono da plataforma; o vínculo atual
+é bloqueado e conferido dentro da transação antes de ler a variável protegida.
 
 A API não recebe senha no corpo: senhaEnvRef aponta para uma variável protegida,
 como SIOP_EMPRESA_HML_MD5. O usuário informou que ainda não possui credencial de

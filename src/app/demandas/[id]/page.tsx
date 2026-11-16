@@ -24,7 +24,7 @@ export default async function DetalheDemanda({ params }: { params: Promise<{ id:
   const { id } = await params;
   const d = await obterDemanda(id, op.empresa.id);
   if (!d) notFound();
-  const [{ proxima }, arts] = await Promise.all([
+  const [{ proxima, checklist }, arts] = await Promise.all([
     revalidarDemanda(d.id),
     prisma.artMultipla.findMany({
       where: { empresaId: op.empresa.id, itens: { some: { demandaId: d.id } }, documento: { empresaId: op.empresa.id } },
@@ -68,6 +68,7 @@ export default async function DetalheDemanda({ params }: { params: Promise<{ id:
 
       <ProximaAcao
         demandaId={d.id}
+        demandaCodigo={d.codigo}
         proxima={proxima}
         bloqueios={bloqueios}
         aprovacao={aprovacaoPendente ? { id: aprovacaoPendente.id, tipo: aprovacaoPendente.tipo } : null}
@@ -122,7 +123,7 @@ export default async function DetalheDemanda({ params }: { params: Promise<{ id:
         </div>
         <div className="stack">
           <PainelPendencias demandaId={d.id} pendencias={d.pendencias} podeResolver={pode(op.papel, "pendencia.resolver")} />
-          <PainelChecklist itens={d.checklist} />
+          <PainelChecklist itens={checklist} />
         </div>
       </div>
     </AppShell>

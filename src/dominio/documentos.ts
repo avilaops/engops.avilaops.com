@@ -35,6 +35,7 @@ export const TIPOS_DOCUMENTO: ReadonlyArray<{ tipo: string; rotulo: string; cate
   { tipo: "SIMIL_COMPROVANTE", rotulo: "Comprovante SIMIL", categoria: "SIMIL" },
   { tipo: "RAE", rotulo: "RAE", categoria: "RAE" },
   { tipo: "SIOPI_COMPROVANTE", rotulo: "Comprovante SIOPI", categoria: "SIOPI" },
+  { tipo: "BB_COMPROVANTE", rotulo: "Comprovante Banco do Brasil", categoria: "ENTREGA" },
   { tipo: "PACOTE_FINAL", rotulo: "Pacote final", categoria: "ENTREGA" },
   { tipo: "OUTRO", rotulo: "Outro", categoria: "ENTRADA" },
 ];
