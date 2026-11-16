@@ -4,8 +4,20 @@ import { revalidatePath } from "next/cache";
 import { exigirOperador } from "@/lib/tenant";
 import { atualizarSalvaGov, salvarOportunidadeGov } from "@/servicos/gov";
 import { criarRegraGov, desativarRegraGov } from "@/servicos/gov-alertas";
+import { controlarColetaGov, ErroControleColetaGov } from "@/servicos/gov-coletas";
 
 export type EstadoGov = { erro?: string; ok?: string };
+export async function controlarColetaGovAction(_: EstadoGov, form: FormData): Promise<EstadoGov> {
+  const op = await exigirOperador();
+  try {
+    const resultado = await controlarColetaGov(op, form.get("id"), form.get("operacao"));
+    revalidatePath("/gov");
+    if (!resultado.alterou) return { ok: resultado.habilitada ? "A coleta já estava ativa." : "A coleta já estava pausada." };
+    return { ok: resultado.habilitada ? "Coleta retomada do progresso salvo." : "Pausa solicitada. Uma página em andamento poderá terminar antes da pausa." };
+  } catch (erro) {
+    return { erro: erro instanceof ErroControleColetaGov ? erro.message : "Não foi possível alterar a coleta. Atualize a situação e tente novamente." };
+  }
+}
 export async function salvarGovAction(_: EstadoGov, form: FormData): Promise<EstadoGov> {
   const op = await exigirOperador();
   try {

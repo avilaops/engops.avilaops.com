@@ -22,7 +22,7 @@ try {
   ssh(`sudo -u postgres createdb --template=template0 --owner=${dono} ${nome}`); criado = true;
   const servidor = createServer(); await new Promise(r => servidor.listen(0, "127.0.0.1", r));
   const porta = servidor.address().port; await new Promise(r => servidor.close(r));
-  tunel = spawn("ssh", ["-o", "BatchMode=yes", "-o", "ExitOnForwardFailure=yes", "-L", `127.0.0.1:${porta}:127.0.0.1:5432`, "-N", "applications"], { stdio: "ignore", windowsHide: true });
+  tunel = spawn("ssh", ["-o", "BatchMode=yes", "-o", "ExitOnForwardFailure=yes", "-L", `127.0.0.1:${porta}:127.0.0.1:5432`, "-N", "applications"], { stdio: "ignore", windowsHide: true, detached: process.platform === "win32" });
   let pronto = false;
   for (let tentativa = 0; tentativa < 100; tentativa++) {
     if (tunel.exitCode !== null) throw new Error("Túnel encerrado antes da verificação");
@@ -37,6 +37,7 @@ try {
   executar(path.join(raiz, "node_modules/vitest/vitest.mjs"), ["run", "tests/integration/gov-banco.test.ts"], env);
 } catch (e) { console.error(sanear(e.message)); process.exitCode = 1; }
 finally {
-  tunel?.kill();
-  if (criado) { if (!/^engops_gov_test_[a-f0-9]{10}$/.test(nome)) throw new Error("Nome de limpeza inválido"); ssh(`sudo -u postgres dropdb --if-exists --force ${nome}`); console.log("Banco isolado removido"); }
+  try {
+    if (criado) { if (!/^engops_gov_test_[a-f0-9]{10}$/.test(nome)) throw new Error("Nome de limpeza inválido"); ssh(`sudo -u postgres dropdb --if-exists --force ${nome}`); console.log("Banco isolado removido"); }
+  } finally { tunel?.kill(); }
 }

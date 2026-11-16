@@ -46,6 +46,12 @@ export function proximoCursorGov(cursor: CursorGov, paginas: number, modalidades
   return { ...cursor, dia: dia.toISOString().slice(0, 10), pagina: 1, modalidade: modalidades[0] };
 }
 export const atrasoGov = (falhas: number) => Math.min(3600000, 15000 * 2 ** Math.min(falhas, 8));
+export function estadoColetaGov(coleta: { habilitada: boolean; reservaAte: Date | null; ultimoErro: string | null }, agora = new Date()): string {
+  const processando = coleta.reservaAte !== null && coleta.reservaAte > agora;
+  if (!coleta.habilitada) return processando ? "Pausando após a página em andamento" : "Pausada";
+  if (processando) return "Processando página";
+  return coleta.ultimoErro ? "Aguardando nova tentativa" : "Ativa";
+}
 export function regiaoGov(uf: string | null): string | null {
   if (!uf) return null;
   for (const [nome, estados] of [["Norte", "AC AP AM PA RO RR TO"], ["Nordeste", "AL BA CE MA PB PE PI RN SE"], ["Centro-Oeste", "DF GO MT MS"], ["Sudeste", "ES MG RJ SP"], ["Sul", "PR RS SC"]]) if (estados.split(" ").includes(uf)) return nome;

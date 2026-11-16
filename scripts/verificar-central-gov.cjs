@@ -35,6 +35,26 @@ async function verificar() {
     page.setDefaultNavigationTimeout(60000);
     page.on("pageerror", e => achados.push(e.message));
     const base = "https://engops.avilaops.com/gov";
+    if (process.argv.includes("--coletas")) {
+      await page.goto(base + "?visao=coleta&busca=referencia-de-verificacao");
+      await page.getByRole("heading", { name: "Central GOV", exact: true }).waitFor();
+      const cards = page.locator(".gov-results > section");
+      assert.equal(await cards.count(), 8, "oito fluxos exibidos");
+      assert.equal(await page.getByRole("button", { name: /^(Pausar|Retomar) coleta / }).count(), 8, "controle disponível ao proprietário em cada fluxo");
+      await page.getByRole("button", { name: "Atualizar situação", exact: true }).click();
+      await page.getByRole("heading", { name: "Central GOV", exact: true }).waitFor();
+      assert.equal(new URL(page.url()).searchParams.get("busca"), "referencia-de-verificacao", "atualização preserva filtros da navegação");
+      assert.equal(await page.getByRole("button", { name: /^(Pausar|Retomar) coleta / }).count(), 8);
+      await page.screenshot({ path: path.join(dir, "coletas-desktop.png"), fullPage: true });
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "controles móveis sem overflow");
+      await page.screenshot({ path: path.join(dir, "coletas-mobile.png"), fullPage: true });
+      assert.deepEqual(achados, [], "sem erros no navegador");
+      const evidencia = { coletas: 8, controlesProprietario: true, atualizacaoManual: true, responsivo: true, alteracoesDeColetaExecutadas: false, verificadoEm: new Date().toISOString() };
+      await fs.writeFile(path.join(dir, "coletas-resultado.json"), JSON.stringify(evidencia, null, 2));
+      console.log(JSON.stringify(evidencia));
+      return;
+    }
     await page.goto(base + "?fonte=compras&inicio=2026-11-01&fim=2026-11-15");
     await page.getByRole("heading", { name: "Central GOV", exact: true }).waitFor();
     assert.ok(await page.locator("article.gov-card").count(), "fonte Compras retornou oportunidades reais");

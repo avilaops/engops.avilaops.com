@@ -5,6 +5,13 @@
   "tasks": [],
   "decisions": [
     {
+      "id": "D-20261116-gov-controles-coleta",
+      "date": "2026-11-16",
+      "decision": "Acrescentar pausa e retomada das coletas globais pela tela de cobertura, exclusivamente ao dono da plataforma.",
+      "rationale": "Incremento operacional da continuação autorizada. A auditoria confirmou oito fluxos sem falhas e cerca de 1,53 milhão de registros, com histórico PNCP ainda em formação. Administrar uma empresa não concede controle sobre o catálogo compartilhado.",
+      "evidence": "167 testes unitários e dez testes em PostgreSQL isolado aprovados. Pausa graciosa, retomada do checkpoint, comandos idempotentes e rollback por falha de auditoria verificados. Revisão sem problemas críticos ou importantes; publicação e navegador ainda pendentes."
+    },
+    {
       "id": "D-20261115-gov-global",
       "date": "2026-11-15",
       "decision": "Ampliar Central GOV com catálogo indexado global, coleta contínua, salvos atualizados, alertas internos e análise consolidada.",

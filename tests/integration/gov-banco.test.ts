@@ -15,6 +15,7 @@ import { buscarGlobalGov, analisarGlobalGov } from "@/servicos/gov-busca";
 import { criarRegraGov, alertarPrazosGov, desativarRegraGov } from "@/servicos/gov-alertas";
 import { salvarOportunidadeGov } from "@/servicos/gov";
 import { reservarColetaGov, cicloColetaGov } from "@/automation/gov-coleta";
+import { controlarColetaGov } from "@/servicos/gov-coletas";
 
 const url = process.env.GOV_TEST_DATABASE_URL;
 const agora = new Date();
@@ -116,6 +117,46 @@ describe.skipIf(!url)("GOV • PostgreSQL real, busca global, coleta e isolament
     await cicloColetaGov();
     expect((await prisma.govColeta.findUniqueOrThrow({ where: { id: "teste" } })).cursor).toEqual({ ...cursor, pagina: 2 });
     expect(await prisma.govRegistro.count()).toBe(1);
+  }, 120000);
+  it("pausa uma coleta em andamento, conclui a página e retoma do checkpoint sem refazer dados", async () => {
+    const cursor = { dia: "2026-11-01", pagina: 1, modalidade: 1 };
+    await prisma.govColeta.create({ data: { id: "controle", fonte: "compras", inicio: agora, cursor, habilitada: true } });
+    const dono = { ...op, dono: true };
+    let liberar!: (resultado: { itens: OportunidadeGov[]; paginas: number }) => void;
+    let avisarReserva!: () => void;
+    const iniciou = new Promise<void>(resolve => { avisarReserva = resolve; });
+    mocks.consultar.mockImplementationOnce(() => {
+      avisarReserva();
+      return new Promise(resolve => { liberar = resolve; });
+    });
+    const primeiraPagina = cicloColetaGov();
+    await iniciou;
+    const reservada = await prisma.govColeta.findUniqueOrThrow({ where: { id: "controle" } });
+    await expect(controlarColetaGov(op, "controle", "pausar")).rejects.toThrow(/dono da plataforma/);
+    await controlarColetaGov(dono, "controle", "pausar");
+    const pausando = await prisma.govColeta.findUniqueOrThrow({ where: { id: "controle" } });
+    expect(pausando.reservadoPor).toBe(reservada.reservadoPor);
+    expect(pausando.reservaAte).toEqual(reservada.reservaAte);
+    liberar({ itens: [item(1)], paginas: 2 });
+    await primeiraPagina;
+    const pausada = await prisma.govColeta.findUniqueOrThrow({ where: { id: "controle" } });
+    expect(pausada.habilitada).toBe(false);
+    expect(pausada.cursor).toEqual({ ...cursor, pagina: 2 });
+    expect(pausada.paginas).toBe(1);
+    expect(await cicloColetaGov()).toBe(false);
+    expect(mocks.consultar).toHaveBeenCalledTimes(1);
+    await controlarColetaGov(dono, "controle", "retomar");
+    await controlarColetaGov(dono, "controle", "retomar");
+    mocks.consultar.mockResolvedValueOnce({ itens: [item(2)], paginas: 2 });
+    await cicloColetaGov();
+    expect(mocks.consultar.mock.calls[1][0].pagina).toBe(2);
+    expect(await prisma.govRegistro.count()).toBe(2);
+    expect(await prisma.auditoria.count({ where: { acao: { startsWith: "gov.coleta." } } })).toBe(2);
+  }, 120000);
+  it("desfaz a mudança de coleta se a auditoria não puder ser gravada", async () => {
+    await prisma.govColeta.create({ data: { id: "controle", fonte: "compras", inicio: agora, cursor: { dia: "2026-11-01", pagina: 1, modalidade: 1 }, habilitada: true } });
+    await expect(controlarColetaGov({ ...op, dono: true, empresa: { ...op.empresa, id: "empresa-inexistente" } }, "controle", "pausar")).rejects.toThrow();
+    expect((await prisma.govColeta.findUniqueOrThrow({ where: { id: "controle" } })).habilitada).toBe(true);
   }, 120000);
   it("rejeita alteração de regra por papel de consulta antes de gravar", async () => {
     await expect(criarRegraGov({ ...op, papel: "CONSULTA" }, "Sem permissão", {})).rejects.toThrow(/permissão/);
