@@ -5,6 +5,13 @@
   "tasks": [],
   "decisions": [
     {
+      "id": "D-20261116-gov-limite-final",
+      "date": "2026-11-16",
+      "decision": "Corrigir o fim de período PCA e Compras moderno para incluir o dia completo e reprocessar seus históricos sem apagar registros.",
+      "rationale": "Auditoria real mostrou que datas iguais retornavam vazio apesar de publicações existentes no dia. Cobertura anterior dessas fontes não comprova conclusão; quatro fluxos pausados e cobertura retirada até a publicação e o reprocessamento.",
+      "evidence": "PCA: 204 com fim 20221231 e 200 com fim 20230101; 37 itens únicos recuperados em quatro páginas. Compras: zero com fim 13/11/2026 e 505 com fim 14/11. Legado e PNCP respondem para o próprio dia e não serão alterados. Script guardado deploy/gov-reprocessar-limite-final.sql; validação e publicação em andamento."
+    },
+    {
       "id": "D-20261116-gov-controles-coleta",
       "date": "2026-11-16",
       "decision": "Acrescentar pausa e retomada das coletas globais pela tela de cobertura, exclusivamente ao dono da plataforma.",

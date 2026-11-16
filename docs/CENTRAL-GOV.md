@@ -4,7 +4,7 @@ Abra `/gov` após selecionar uma empresa. Ávila Ops usa CNPJ 67.954.417/0001-64
 
 • Propostas abertas: PNCP, todas as modalidades por padrão; filtros remotos por UF, CNPJ do órgão, modalidade e encerramento.
 • Editais publicados: PNCP, período e modalidade explícitos; não implica prazo aberto.
-• Planejamento anual: PCA atualizado no período, com itens individuais; paginação por planos, data desejada e ano preservados.
+• Planejamento anual: PCA atualizado no período, com itens individuais; paginação por itens agrupados na resposta por plano, data desejada e ano preservados.
 • Pregões Compras.gov.br: contratações da Lei 14.133, código SIASG 5, com filtros remotos por período, UF, órgão e objeto. Código PNCP 6 não pode ser usado diretamente como código SIASG.
 • Legado: arquivo de pregões anteriores. Há dados reais confirmados em 2022; períodos recentes podem retornar vazios.
 • Salvas: retrato atualizado, notas e situação da análise por empresa, com paginação e notificações internas de alteração e prazo.
@@ -18,6 +18,8 @@ O worker executa duas reservas independentes, com lease, checkpoint persistente,
 Para planejamento salvo, a conferência individual pesquisa o órgão nas páginas da API PCA por janelas de até 365 dias, desde o período atual até o início permitido pela fonte em 01/04/2021. O item é identificado pelo controle PNCP completo e número, sem depender da posição na primeira página ou da conclusão do histórico nacional. Indisponibilidade preserva o retrato anterior e gera nova tentativa.
 
 O histórico PCA usa janelas diárias: a consulta mensal de abril/maio de 2023 apresentou HTTP 500 na fonte enquanto a diária respondeu normalmente. Cursores mensais anteriores que já estejam na página 2 ou seguinte concluem o mesmo intervalo antes da mudança. O tamanho da janela fica no cursor, mantendo as páginas seguintes no mesmo período. Nenhum dia do histórico é descartado.
+
+Correção de cobertura em 16/11/2026: PCA e Compras.gov.br moderno interpretam o fim informado como meia-noite. Os adaptadores enviam o dia seguinte ao fim escolhido para incluir o dia completo. Antes dessa correção, janelas diárias com datas iguais retornavam vazias e janelas mensais omitiam sua fronteira final. A conclusão histórica dessas duas fontes foi retirada e suas quatro coletas foram pausadas para correção. Após publicar, `deploy/gov-reprocessar-limite-final.sql` retoma PCA desde 01/04/2021, Compras desde 01/01/2021 e as revisões recentes dos últimos sete dias, sem apagar registros existentes. O script exige a marca de revisão nas coletas pausadas e não reinicia uma coleta já retomada. PCA conta itens paginados, agrupados por plano na resposta; não conta planos. Legado e PNCP mantêm os parâmetros anteriores, conforme verificações reais de consulta de um único dia.
 
 Papéis que podem editar demandas podem salvar/analisar oportunidades. Consulta e revisor apenas leem. Toda gravação e consulta de salvos usa empresa da sessão. Falhas externas aparecem como falhas, não como resultado vazio. Links são oficiais e conteúdo externo é renderizado como texto.
 

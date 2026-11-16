@@ -79,7 +79,7 @@ export default async function CentralGov({ searchParams }: { searchParams: Promi
     {erro && <div role="alert" className="panel gov-error"><strong>Consulta não concluída</strong><p>{erro}</p><p>Nenhum resultado foi substituído por dados de exemplo. Ajuste os filtros ou tente novamente.</p><Link href={compras ? "/gov/fontes?fonte=abertas" : "/gov/fontes?fonte=compras"} className="secondary-button">Consultar outra fonte oficial</Link></div>}
     {resultado && <section className="panel gov-coverage">
       <strong>{resultado.total.toLocaleString("pt-BR")} {resultado.unidadePaginacao} informados pela fonte • página {resultado.pagina} de {resultado.paginas || 1}</strong>
-      <p>{visiveis.length} itens exibidos de {itens.length} recebidos nesta página{planejamento ? " de planos" : ""}. {compras ? "Texto do objeto também é consultado na fonte. Nome do órgão e valores filtram esta página." : "Texto, nome do órgão e valores filtram somente os itens recebidos; não representam uma busca nacional completa."}</p>
+      <p>{visiveis.length} itens exibidos de {itens.length} recebidos nesta página. {compras ? "Texto do objeto também é consultado na fonte. Nome do órgão e valores filtram esta página." : "Texto, nome do órgão e valores filtram somente os itens recebidos; não representam uma busca nacional completa."}</p>
       <p className="muted">Consultado em {new Date(resultado.consultadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} • <a href={resultado.endpoint} target="_blank" rel="noopener noreferrer">Requisição oficial</a></p>
     </section>}
     {salvas && <p>{registrosSalvos.length} salvas carregadas • limite de 500 mais recentes • {visiveis.length} exibidas pelos filtros.</p>}

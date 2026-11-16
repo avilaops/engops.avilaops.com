@@ -84,6 +84,16 @@ async function verificar() {
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "layout móvel sem overflow");
     await page.screenshot({ path: path.join(dir, "mobile.png"), fullPage: true });
+    if (process.argv.includes("--datas")) {
+      await page.goto(base + "/fontes?fonte=planejamento&cnpj=02042388000119&inicio=2022-12-31&fim=2022-12-31");
+      assert.ok(await page.locator("article.gov-card").count(), "PCA encontra itens publicados no dia final completo");
+      assert.match(await page.locator(".gov-coverage").innerText(), /itens de planejamento informados pela fonte/i);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "PCA móvel sem overflow");
+      await page.screenshot({ path: path.join(dir, "datas-pca-mobile.png"), fullPage: true });
+      await page.goto(base + "/fontes?fonte=compras&inicio=2026-11-13&fim=2026-11-13");
+      assert.ok(await page.locator("article.gov-card").count(), "Compras encontra publicações quando início e fim são o mesmo dia");
+      assert.equal(await page.locator(".gov-error").count(), 0, "consulta do dia completo sem erro");
+    }
     if (process.argv.includes("--global")) {
       await page.setViewportSize({ width: 1440, height: 1000 });
       await page.goto(base);
@@ -116,7 +126,7 @@ async function verificar() {
       await page.screenshot({ path: path.join(dir, "global-mobile.png"), fullPage: true });
     }
     assert.deepEqual(achados, [], "sem erros no navegador");
-    const evidencia = { empresa: resultado.empresa, fonte: "Compras.gov.br", oportunidadesReais: true, paginacao: true, responsivo: true, persistenciaEIsolamento: process.argv.includes("--salvar") || process.argv.includes("--global"), buscaGlobalEAnalise: process.argv.includes("--global"), verificadoEm: new Date().toISOString() };
+    const evidencia = { empresa: resultado.empresa, fonte: "Compras.gov.br", oportunidadesReais: true, paginacao: true, responsivo: true, persistenciaEIsolamento: process.argv.includes("--salvar") || process.argv.includes("--global"), buscaGlobalEAnalise: process.argv.includes("--global"), consultasDiaCompleto: process.argv.includes("--datas"), verificadoEm: new Date().toISOString() };
     await fs.writeFile(path.join(dir, "resultado.json"), JSON.stringify(evidencia, null, 2));
     console.log(JSON.stringify(evidencia));
   } finally { await browser.close(); }
