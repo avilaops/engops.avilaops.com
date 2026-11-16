@@ -27,11 +27,10 @@ function mensagem(e: unknown): string {
 
 export async function criarEmpresaAction(_: EstadoAcao, form: FormData): Promise<EstadoAcao> {
   const { email, dono, sessao } = await exigirSessao();
-  if (!dono) return { erro: "Só o dono da plataforma cria empresas." };
   let id: string;
   try {
-    const dados = esquemaEmpresa.parse({ nome: form.get("nome"), cnpj: form.get("cnpj"), slug: form.get("slug") });
-    const e = await criarEmpresa(email, dados, { email, nome: sessao.nome });
+    const dados = esquemaEmpresa.parse({ nome: form.get("nome"), cnpj: form.get("cnpj") });
+    const e = await criarEmpresa(email, dados, { email, nome: sessao.nome }, { somenteSemVinculo: !dono });
     id = e.id;
   } catch (e) {
     return { erro: mensagem(e) };

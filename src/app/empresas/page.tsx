@@ -1,21 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { empresasDoUsuario, exigirSessao } from "@/lib/tenant";
 import { Icone } from "@/components/ui/Icones";
 import NovaEmpresaForm from "@/components/NovaEmpresaForm";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Escolha de empresa. Quem é membro de uma só é mandado direto; quem é de
- * várias (ou dono da plataforma) escolhe aqui. O dono também cria a primeira.
- */
+/** Escolha de tenant e primeiro acesso SaaS para contas sem empresa. */
 export default async function Empresas({ searchParams }: { searchParams: Promise<{ erro?: string; criada?: string }> }) {
   const { email, dono, sessao } = await exigirSessao();
   const sp = await searchParams;
   const empresas = await empresasDoUsuario(email);
-  const total = dono ? await prisma.empresa.count() : empresas.length;
 
   return (
     <main className="main-canvas" style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -23,12 +18,22 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
         <span className="brand-mark"><Image src="/simbolo.png" alt="" width={22} height={22} /></span>
         <strong>EngOps</strong>
       </div>
-      <div className="page-header">
-        <div>
-          <h1>Olá, {sessao.nome.split(" ")[0]}</h1>
-          <p>{empresas.length ? "Escolha a empresa em que vai operar." : dono ? "Nenhuma empresa cadastrada ainda. Crie a primeira." : "Sua conta ainda não está ligada a nenhuma empresa. Peça a quem administra para incluir você na equipe."}</p>
+      {empresas.length ? (
+        <div className="page-header">
+          <div>
+            <h1>Olá, {sessao.nome.split(" ")[0]}</h1>
+            <p>Escolha o espaço da empresa em que vai operar.</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <section style={{ marginBottom: 20 }}>
+          <p className="subtle" style={{ marginBottom: 6 }}>Seu espaço de trabalho começa aqui</p>
+          <h1>Crie a empresa da sua equipe</h1>
+          <p className="muted" style={{ marginTop: 8 }}>
+            Organize demandas, documentos e operações da Caixa em um ambiente próprio. Você será a pessoa administradora inicial e poderá convidar sua equipe depois.
+          </p>
+        </section>
+      )}
       {sp.erro === "sem-acesso" ? <p className="form-error" style={{ marginBottom: 16 }}>Você não tem acesso a essa empresa.</p> : null}
       {sp.criada ? <p className="form-ok" style={{ marginBottom: 16 }}>Empresa criada.</p> : null}
 
@@ -46,9 +51,10 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
         </div>
       ) : null}
 
-      {dono ? (
+      {!empresas.length || dono ? (
         <section className="panel">
-          <div className="panel-title"><h2>{total ? "Nova empresa" : "Primeira empresa"}</h2></div>
+          <div className="panel-title"><h2>{empresas.length ? "Nova empresa" : "Dados da empresa"}</h2></div>
+          {!empresas.length ? <p className="muted" style={{ marginBottom: 16 }}>Cadastre os dados básicos para abrir seu espaço no EngOps. O cadastro cria uma empresa nova e não associa sua conta a empresas já existentes.</p> : null}
           <NovaEmpresaForm />
         </section>
       ) : null}
