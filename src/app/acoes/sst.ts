@@ -5,8 +5,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigirOperador } from "@/lib/tenant";
 import { exigirModulo } from "@/servicos/modulos";
+import { podeAlterarPessoas } from "@/dominio/modulos";
+import { treinamentoSchema } from "@/dominio/sst";
 
-async function contextoSst() { const op = await exigirOperador(); await exigirModulo(op.empresa.id, "SST"); return op; }
+async function contextoSst() { const op = await exigirOperador(); await exigirModulo(op.empresa.id, "SST"); if (!podeAlterarPessoas(op.papel)) throw new Error("Sem permissão para alterar dados de SST."); return op; }
 
 export async function criarNormaAction(form: FormData): Promise<void> {
   const op = await contextoSst();
@@ -17,7 +19,7 @@ export async function criarNormaAction(form: FormData): Promise<void> {
 
 export async function criarTreinamentoAction(form: FormData): Promise<void> {
   const op = await contextoSst();
-  const dados = z.object({ titulo: z.string().trim().min(2), inicio: z.coerce.date(), normaId: z.string().optional(), instrutor: z.string().optional(), validadeMeses: z.coerce.number().int().positive().optional() }).parse(Object.fromEntries(form));
+  const dados = treinamentoSchema.parse(Object.fromEntries(form));
   if (dados.normaId && !await prisma.normaSst.findFirst({ where: { id: dados.normaId, empresaId: op.empresa.id } })) throw new Error("Norma não pertence a esta empresa.");
   await prisma.treinamentoSst.create({ data: { ...dados, normaId: dados.normaId || null, empresaId: op.empresa.id } });
   revalidatePath("/sst"); revalidatePath("/agenda");

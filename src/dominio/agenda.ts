@@ -7,3 +7,7 @@ export function intervaloDoMes(ano: number, mes: number): Intervalo {
 export function pertenceAoIntervalo(data: Date, intervalo: Intervalo): boolean {
   return data >= intervalo.inicio && data < intervalo.fim;
 }
+
+export function fontesDaAgenda(modulos: ReadonlyArray<"RH" | "SST">) {
+  return { compromissos: modulos.includes("RH"), sst: modulos.includes("SST") };
+}

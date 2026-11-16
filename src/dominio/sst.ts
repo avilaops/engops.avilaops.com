@@ -11,3 +11,13 @@ export function calcularVencimento(emissao: Date, validadeMeses: number): Date {
 export function participantePertenceAoTenant(empresaId: string, empresaDoFuncionarioId: string): boolean {
   return empresaId === empresaDoFuncionarioId;
 }
+import { z } from "zod";
+
+export const treinamentoSchema = z.object({
+  titulo: z.string().trim().min(2),
+  inicio: z.coerce.date(),
+  normaId: z.string().optional(),
+  instrutor: z.string().optional(),
+  validadeMeses: z.preprocess((valor) => valor === "" ? undefined : valor, z.coerce.number().int().positive().optional()),
+});
+

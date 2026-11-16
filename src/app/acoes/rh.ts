@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirOperador } from "@/lib/tenant";
 import { cadastroNomeSchema, funcionarioSchema } from "@/dominio/rh";
+import { podeAlterarPessoas } from "@/dominio/modulos";
 import { exigirModulo } from "@/servicos/modulos";
 
 async function contextoRh() {
   const op = await exigirOperador();
   await exigirModulo(op.empresa.id, "RH");
+  if (!podeAlterarPessoas(op.papel)) throw new Error("Sem permissão para alterar dados de RH.");
   return op;
 }
 

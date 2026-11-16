@@ -13,3 +13,7 @@ export function podeAdministrarModulos(dono: boolean): boolean {
   return dono;
 }
 
+export function podeAlterarPessoas(papel: string): boolean {
+  return papel !== "CONSULTA";
+}
+

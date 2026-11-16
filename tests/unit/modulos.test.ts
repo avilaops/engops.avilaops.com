@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MODULOS, moduloHabilitado, podeAdministrarModulos } from "@/dominio/modulos";
+import { MODULOS, moduloHabilitado, podeAdministrarModulos, podeAlterarPessoas } from "@/dominio/modulos";
 import { navegacaoDoPapel } from "@/lib/navegacao";
 
 describe("módulos por tenant", () => {
@@ -16,6 +16,12 @@ describe("módulos por tenant", () => {
   it("somente dono da plataforma administra ativações", () => {
     expect(podeAdministrarModulos(true)).toBe(true);
     expect(podeAdministrarModulos(false)).toBe(false);
+  });
+
+  it("impede perfil de consulta de alterar RH, SST e agenda", () => {
+    expect(podeAlterarPessoas("CONSULTA")).toBe(false);
+    expect(podeAlterarPessoas("ADMIN")).toBe(true);
+    expect(podeAlterarPessoas("OPERADOR")).toBe(true);
   });
 
   it("navegação mostra apenas módulos habilitados", () => {

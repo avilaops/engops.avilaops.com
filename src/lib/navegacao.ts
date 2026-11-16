@@ -25,7 +25,7 @@ export type Secao =
   | "agenda"
   | "auditoria";
 
-export type ItemNavegacao = { href: string; label: string; section: Secao; modulo?: ModuloEngOps };
+export type ItemNavegacao = { href: string; label: string; section: Secao; modulos?: ModuloEngOps[] };
 export type GrupoNavegacao = { label: string; items: ItemNavegacao[] };
 
 export const iconeDaSecao: Record<Secao, NomeIcone> = {
@@ -53,9 +53,9 @@ export const navegacao: GrupoNavegacao[] = [
   {
     label: "Pessoas e SST",
     items: [
-      { href: "/rh", label: "Recursos Humanos", section: "rh", modulo: "RH" },
-      { href: "/sst", label: "Segurança do Trabalho", section: "sst", modulo: "SST" },
-      { href: "/agenda", label: "Agenda", section: "agenda", modulo: "RH" },
+      { href: "/rh", label: "Recursos Humanos", section: "rh", modulos: ["RH"] },
+      { href: "/sst", label: "Segurança do Trabalho", section: "sst", modulos: ["SST"] },
+      { href: "/agenda", label: "Agenda", section: "agenda", modulos: ["RH", "SST"] },
     ],
   },
   {
@@ -85,7 +85,7 @@ export function navegacaoDoPapel(papel: PapelMembro, modulos: ReadonlyArray<Modu
     .map((g) => ({
       ...g,
       items: g.items.filter((i) => {
-        if (i.modulo && !modulos.includes(i.modulo)) return false;
+        if (i.modulos && !i.modulos.some((modulo) => modulos.includes(modulo))) return false;
         const acao = ACAO_DA_SECAO[i.section];
         return !acao || pode(papel, acao);
       }),

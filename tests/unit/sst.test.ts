@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularVencimento, participantePertenceAoTenant } from "@/dominio/sst";
+import { calcularVencimento, participantePertenceAoTenant, treinamentoSchema } from "@/dominio/sst";
 
 describe("SST", () => {
   it("calcula a validade do certificado em meses", () => {
@@ -8,5 +8,9 @@ describe("SST", () => {
 
   it("recusa participante de outro tenant", () => {
     expect(participantePertenceAoTenant("empresa-a", "empresa-b")).toBe(false);
+  });
+
+  it("aceita validade vazia como não informada", () => {
+    expect(treinamentoSchema.parse({ titulo: "NR 10", inicio: "2026-11-16T10:00", validadeMeses: "" }).validadeMeses).toBeUndefined();
   });
 });
