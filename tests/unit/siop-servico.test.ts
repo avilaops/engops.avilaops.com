@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Operador } from "@/lib/tenant";
 const mocks = vi.hoisted(() => ({
   db: {
-    $transaction: vi.fn(), siopCredencial: { findUnique: vi.fn(), upsert: vi.fn() },
+    $transaction: vi.fn(), $queryRaw: vi.fn(), siopCredencial: { findUnique: vi.fn(), upsert: vi.fn() },
     siopConsulta: { create: vi.fn(), update: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() },
     siopRetorno: { create: vi.fn() }, siopExecucaoOrcamentariaPac: { createMany: vi.fn(), findMany: vi.fn(), count: vi.fn() },
   }, remoto: vi.fn(), auditoria: vi.fn(),
@@ -20,6 +20,7 @@ beforeEach(() => {
   mocks.db.$transaction.mockImplementation(async (fn) => fn(mocks.db));
   mocks.db.siopCredencial.findUnique.mockResolvedValue({ id: "credencial-a", usuario: "integracao", perfil: 32, email: null, senhaEnvRef: "SIOP_TESTE_MD5", habilitada: true });
   mocks.db.siopConsulta.create.mockResolvedValue({ id: "consulta-a" });
+  mocks.db.siopCredencial.upsert.mockResolvedValue({ id: "credencial-a" });
   mocks.db.siopRetorno.create.mockResolvedValue({ id: "retorno-a" });
   mocks.remoto.mockResolvedValue({ sucesso: true, execucoesOrcamentarias: { execucaoOrcamentaria: [] } });
 });
@@ -33,8 +34,20 @@ describe("SIOP • serviço autenticado e isolado por empresa", () => {
   it("recusa configurar por gestor e habilitar sem segredo disponível", async () => {
     const entrada = { usuario: "integracao", perfil: 32, senhaEnvRef: "SIOP_AUSENTE_MD5", habilitada: true };
     await expect(configurarSiop({ ...op, papel: "GESTOR" }, entrada)).rejects.toMatchObject({ codigo: "PROIBIDO" });
-    await expect(configurarSiop(op, entrada)).rejects.toMatchObject({ codigo: "CREDENCIAL_AUSENTE" });
+    await expect(configurarSiop({ ...op, dono: true }, entrada)).rejects.toMatchObject({ codigo: "CREDENCIAL_AUSENTE" });
     expect(mocks.db.siopCredencial.upsert).not.toHaveBeenCalled();
+  });
+  it("impede administrador de vincular referência de outra empresa mesmo que exista no servidor", async () => {
+    const entrada = { usuario: "outro-usuario", perfil: 32, senhaEnvRef: "SIOP_OUTRA_EMPRESA_MD5", habilitada: true };
+    process.env.SIOP_OUTRA_EMPRESA_MD5 = segredo;
+    try {
+      await expect(configurarSiop(op, entrada)).rejects.toMatchObject({ codigo: "PROIBIDO" });
+      expect(mocks.db.siopCredencial.upsert).not.toHaveBeenCalled();
+    } finally { delete process.env.SIOP_OUTRA_EMPRESA_MD5; }
+  });
+  it("permite ao administrador manter a referência previamente associada pelo dono", async () => {
+    await configurarSiop(op, { usuario: "integracao", perfil: 32, senhaEnvRef: "SIOP_TESTE_MD5", habilitada: false });
+    expect(mocks.db.siopCredencial.upsert).toHaveBeenCalledOnce();
   });
   it("mantém conexão sem credencial desativada, sem fabricar uma consulta", async () => {
     mocks.db.siopCredencial.findUnique.mockResolvedValue({ habilitada: false });

@@ -18,9 +18,9 @@ export default function PainelExecucoes({ demandaId, execucoes, aprovacoes, modo
   if (!execucoes.length) return null;
   return (
     <section className="panel" id="execucoes">
-      <div className="panel-title"><h2>SIMIL, RAE e SIOPI</h2><ModoBadge modo={modo} /></div>
+      <div className="panel-title"><h2>Operações e comprovantes</h2><ModoBadge modo={modo} /></div>
       {execucoes.map((x) => {
-        const dados = x.dados as { campos?: CampoPreparado[]; resumo?: Record<string, number> };
+        const dados = x.dados as { campos?: CampoPreparado[]; resumo?: Record<string, number>; origem?: string; observacoes?: string };
         const aprovacao = aprovacoes.find((a) => a.jobId === x.jobId && a.status === "PENDENTE") ?? null;
         const tom = x.status === "CONCLUIDA" ? "badge badge-good" : x.status === "FALHOU" || x.status === "CANCELADA" ? "badge badge-bad" : "badge badge-warn";
         return (
@@ -28,12 +28,13 @@ export default function PainelExecucoes({ demandaId, execucoes, aprovacoes, modo
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
               <strong>{x.sistema}</strong>
               <span className={tom}>{NOME_STATUS[x.status]}</span>
-              <span className="badge">{x.modo === "SOMBRA" ? "sombra" : "real"}</span>
+              <span className="badge">{dados.origem === "REGISTRO_MANUAL" ? "registro manual" : x.modo === "SOMBRA" ? "sombra" : "real"}</span>
               <span className="subtle">{dataHora(x.iniciadoEm)}{x.terminadoEm ? ` → ${dataHora(x.terminadoEm)}` : ""}</span>
               {x.protocolo ? <span className="badge">protocolo {x.protocolo}</span> : null}
             </div>
             {dados.resumo ? <p className="muted" style={{ marginBottom: 8 }}>{dados.resumo.total} campos: {dados.resumo.validados} validados, {dados.resumo.revisar} para revisar, {dados.resumo.ausentes} ausentes.</p> : null}
             {x.erroMensagem ? <p className="form-error">{x.erroCodigo}: {x.erroMensagem}</p> : null}
+            {dados.observacoes ? <p style={{ whiteSpace: "pre-wrap" }}>{dados.observacoes}</p> : null}
             {dados.campos?.length ? (
               <div style={{ overflowX: "auto" }}>
                 <table className="campos-table">

@@ -1,4 +1,4 @@
-import type { EstadoItem, GrupoChecklist, StatusDemanda } from "@prisma/client";
+import type { EstadoItem, GrupoChecklist, StatusDemanda, SistemaExterno } from "@prisma/client";
 import type { Problema } from "@/dominio/validacao";
 
 /**
@@ -20,7 +20,7 @@ export type EntradaChecklist = {
   status: StatusDemanda;
   documentosPorTipo: Set<string>;
   problemas: Problema[];
-  execucoes: Array<{ sistema: "SIMIL" | "RAE" | "SIOPI"; status: string }>;
+  execucoes: Array<{ sistema: SistemaExterno; status: string }>;
   temPacoteFinal: boolean;
 };
 

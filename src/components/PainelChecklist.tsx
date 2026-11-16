@@ -3,7 +3,7 @@ import { EstadoIcone } from "@/components/Badges";
 import { GRUPOS } from "@/dominio/checklist";
 
 /** Checklist calculado do estado real. Não tem caixinha para marcar de propósito. */
-export default function PainelChecklist({ itens }: { itens: ItemChecklist[] }) {
+export default function PainelChecklist({ itens }: { itens: Array<Pick<ItemChecklist, "grupo" | "chave" | "rotulo" | "estado"> & { detalhe?: string | null }> }) {
   return (
     <section className="panel">
       <div className="panel-title"><h2>Checklist</h2><span className="subtle">calculado do estado real</span></div>
@@ -14,7 +14,7 @@ export default function PainelChecklist({ itens }: { itens: ItemChecklist[] }) {
           <div className="check-group" key={grupo}>
             <h3>{rotulo}</h3>
             {doGrupo.map((i) => (
-              <div className="check-item" key={i.id}>
+              <div className="check-item" key={i.chave}>
                 <EstadoIcone estado={i.estado} />
                 <span>{i.rotulo}</span>
                 {i.detalhe ? <small>{i.detalhe}</small> : null}

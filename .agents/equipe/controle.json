@@ -5,6 +5,13 @@
   "tasks": [],
   "decisions": [
     {
+      "id": "D-20261116-integracoes-telas",
+      "date": "2026-11-16",
+      "decision": "Completar as telas de SIOP e acompanhamento operacional de RAE, SIOPI e Banco do Brasil no EngOps.",
+      "rationale": "Usuário autorizou a entrega e publicação das interfaces pendentes. SIOP reutiliza a integração federal existente; operações manuais exigem comprovantes do dossiê e auditoria sem prometer conectores ou modelos oficiais ausentes.",
+      "evidence": "docs/INTEGRACOES-TELAS.md e plano 2026-11-16-integracoes-telas.md. Tipos/lint,181 testes unitários,dez testes em PostgreSQL isolado e navegador local aprovados. Checklist imediato e vínculo protegido da credencial ao dono corrigidos e revisados. Backup, migração de produção e publicação em andamento."
+    },
+    {
       "id": "D-20261116-gov-limite-final",
       "date": "2026-11-16",
       "decision": "Corrigir o fim de período PCA e Compras moderno para incluir o dia completo e reprocessar seus históricos sem apagar registros.",

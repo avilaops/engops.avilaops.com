@@ -57,6 +57,7 @@ model Empresa {
   oportunidadesGov OportunidadeGovSalva[]
   regrasGov GovRegraAlerta[]
   avisosGov GovAviso[]
+  configuracoesOperacionais ConfiguracaoOperacional[]
 
   @@map("empresas")
 }
@@ -569,6 +570,25 @@ enum SistemaExterno {
   SIMIL
   RAE
   SIOPI
+  BANCO_BRASIL
+}
+
+/// Parâmetros não secretos de operação manual. Não habilita conectores externos.
+model ConfiguracaoOperacional {
+  id String @id @default(cuid())
+  empresaId String
+  sistema SistemaExterno
+  portalUrl String?
+  unidade String?
+  operacao String?
+  observacoes String?
+  atualizadoPor String
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, sistema])
+  @@map("configuracoes_operacionais")
 }
 
 enum StatusExecucao {

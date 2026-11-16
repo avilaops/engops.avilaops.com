@@ -131,4 +131,6 @@ autenticação no serviço federal.
 
 ## Métricas a acompanhar desde já
 
+As telas de configuração/consulta SIOP e acompanhamento manual de RAE, SIOPI e Banco do Brasil estão descritas em [Integrações • telas e fontes oficiais](INTEGRACOES-TELAS.md). O registro manual com comprovante não substitui as dependências de geração oficial e conexão automática das fases 6 e 7.
+
 Tempo entrada→entrega, % de demandas com pendência antes da preparação, execuções em sombra confirmadas × recusadas (é a taxa de acerto do mapa de campos), jobs FAILED por código, OS concluídas no prazo por contratante e tipo de serviço.
