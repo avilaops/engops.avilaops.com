@@ -22,7 +22,7 @@ export const esquemaFiltrosGov = z.object({
   if (v.inicio && v.fim && v.inicio > v.fim) ctx.addIssue({ code: "custom", message: "Data inicial deve anteceder a final" });
   if (v.minimo !== undefined && v.maximo !== undefined && v.minimo > v.maximo) ctx.addIssue({ code: "custom", message: "Valor mínimo deve ser menor que o máximo" });
   if (v.fonte === "compras" && v.modalidade !== undefined && v.modalidade !== 6) ctx.addIssue({ code: "custom", message: "A consulta Compras.gov.br desta aba é de pregões" });
-  if (v.fonte !== "abertas" && v.inicio && v.fim && (new Date(v.fim).getTime() - new Date(v.inicio).getTime()) / 86400000 > 365) ctx.addIssue({ code: "custom", message: "Consulte intervalos de até 365 dias" });
+  if (v.fonte !== "abertas" && v.inicio && v.fim && (new Date(v.fim).getTime() - new Date(v.inicio).getTime()) / 86400000 > (v.fonte === "planejamento" ? 364 : 365)) ctx.addIssue({ code: "custom", message: "Consulte intervalos de até 365 dias" });
 });
 export type FiltrosGov = z.infer<typeof esquemaFiltrosGov>;
 export const esquemaOportunidade = z.object({
@@ -40,13 +40,14 @@ export const esquemaOportunidade = z.object({
   }, "Link oficial inválido"),
 });
 export type OportunidadeGov = z.infer<typeof esquemaOportunidade>;
-export type ResultadoGov = { itens: OportunidadeGov[]; total: number; paginas: number; pagina: number; consultadoEm: string; unidadePaginacao: "registros" | "planos"; endpoint: string };
+export type ResultadoGov = { itens: OportunidadeGov[]; total: number; paginas: number; pagina: number; consultadoEm: string; unidadePaginacao: "registros" | "itens de planejamento"; endpoint: string };
 type Registro = Record<string, unknown>;
 const objeto = (v: unknown): Registro => v && typeof v === "object" && !Array.isArray(v) ? v as Registro : {};
 const texto = (v: unknown): string | null => typeof v === "string" && v.trim() ? v : null;
 const numero = (v: unknown): number | null => v !== null && v !== undefined && v !== "" && Number.isFinite(Number(v)) ? Number(v) : null;
 const compacto = (v: string) => v.replaceAll("-", "");
 const isoDia = (d: Date) => d.toISOString().slice(0, 10);
+const diaSeguinte = (d: string) => isoDia(new Date(new Date(`${d}T00:00:00Z`).getTime() + 86400000));
 
 function normalizarPncp(r: Registro): OportunidadeGov {
   const orgao = objeto(r.orgaoEntidade), unidade = objeto(r.unidadeOrgao);
@@ -108,15 +109,16 @@ export async function consultarGov(entrada: unknown, opcoes: { tamanhoPagina?: n
   const inicio = f.inicio ?? isoDia(new Date(hoje.getTime() - 7 * 86400000));
   const fim = f.fim ?? isoDia(f.fonte === "abertas" ? new Date(hoje.getFullYear() + 1, 11, 31, 12) : hoje);
   if (inicio > fim) throw new Error("Data inicial deve anteceder a final");
+  if (f.fonte === "planejamento" && (new Date(fim).getTime() - new Date(inicio).getTime()) / 86400000 > 364) throw new Error("Consulte intervalos de até 365 dias");
   const solicitado = opcoes.tamanhoPagina ?? 10;
   if (!Number.isInteger(solicitado) || solicitado < 1 || solicitado > 500) throw new Error("Tamanho de página inválido");
-  // PNCP aceita de 10 a 50; o módulo Compras admite lotes maiores.
+  // Limitar chamadas PNCP a lotes de 10 a 50; Compras admite lotes maiores.
   const tamanho = ["compras", "pregoes"].includes(f.fonte) ? solicitado : Math.min(50, Math.max(10, solicitado));
   const params = new URLSearchParams({ pagina: String(f.pagina), tamanhoPagina: String(tamanho) });
   let endpoint: string;
   if (f.fonte === "compras") {
     endpoint = "https://dadosabertos.compras.gov.br/modulo-contratacoes/1_consultarContratacoes_PNCP_14133";
-    params.set("dataPublicacaoPncpInicial", inicio); params.set("dataPublicacaoPncpFinal", fim);
+    params.set("dataPublicacaoPncpInicial", inicio); params.set("dataPublicacaoPncpFinal", diaSeguinte(fim));
     // SIASG usa 5 para pregão; PNCP usa 6 para pregão eletrônico.
     params.set("codigoModalidade", "5");
     if (f.uf) params.set("unidadeOrgaoUfSigla", f.uf);
@@ -128,7 +130,11 @@ export async function consultarGov(entrada: unknown, opcoes: { tamanhoPagina?: n
   } else {
     const caminho = f.fonte === "planejamento" ? "pca/atualizacao" : `contratacoes/${f.fonte === "publicacoes" ? opcoes.atualizacoes ? "atualizacao" : "publicacao" : "proposta"}`;
     endpoint = `https://pncp.gov.br/api/consulta/v1/${caminho}`;
-    if (f.fonte === "planejamento") { params.set("dataInicio", compacto(inicio)); params.set("dataFim", compacto(fim)); }
+    if (f.fonte === "planejamento") {
+      // A fonte usa meia-noite como limite exclusivo. A interface e o cursor
+      // representam dias completos, por isso o fim enviado é o dia seguinte.
+      params.set("dataInicio", compacto(inicio)); params.set("dataFim", compacto(diaSeguinte(fim)));
+    }
     else { params.set("dataFinal", compacto(fim)); if (f.fonte === "publicacoes") params.set("dataInicial", compacto(inicio)); }
     if (f.cnpj) params.set("cnpj", f.cnpj);
     if (f.fonte !== "planejamento") {
@@ -140,7 +146,7 @@ export async function consultarGov(entrada: unknown, opcoes: { tamanhoPagina?: n
   let r: Response;
   try { r = await fetch(url, { signal: AbortSignal.timeout(30000), cache: "no-store", headers: { Accept: "application/json" } }); }
   catch { throw new Error("A fonte oficial não respondeu em tempo. Tente novamente; isso não indica ausência de oportunidades."); }
-  const base = { pagina: f.pagina, consultadoEm: new Date().toISOString(), unidadePaginacao: f.fonte === "planejamento" ? "planos" as const : "registros" as const, endpoint: url };
+  const base = { pagina: f.pagina, consultadoEm: new Date().toISOString(), unidadePaginacao: f.fonte === "planejamento" ? "itens de planejamento" as const : "registros" as const, endpoint: url };
   if (r.status === 204) return { ...base, itens: [], total: 0, paginas: 0 };
   if (!r.ok) throw new Error(`Fonte oficial indisponível • HTTP ${r.status}. Tente novamente.`);
   const body = objeto(await r.json().catch(() => { throw new Error("Fonte oficial retornou formato inválido"); }));

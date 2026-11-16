@@ -5,6 +5,38 @@ afterEach(() => vi.unstubAllGlobals());
 const resposta = (body: unknown, status = 200) => vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status })));
 
 describe("Central GOV • fontes oficiais", () => {
+  it("inclui o dia final no PCA convertendo-o para o limite exclusivo observado na fonte", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((entrada: string) => {
+      const p = new URL(entrada).searchParams;
+      if (p.get("dataInicio") === p.get("dataFim")) return Promise.resolve(new Response(null, { status: 204 }));
+      return Promise.resolve(new Response(JSON.stringify({ data: [{ idPcaPncp: "12345678000190-0-000001/2023", orgaoEntidadeCnpj: "12345678000190", anoPca: 2023, itens: [{ numeroItem: 22, descricaoItem: "Serviço publicado no fim do dia", dataAtualizacao: "2022-12-31T23:36:27", valorTotal: 60000 }] }], totalRegistros: 37, totalPaginas: 4 })));
+    }));
+    const r = await consultarGov({ fonte: "planejamento", inicio: "2022-12-31", fim: "2022-12-31" });
+    expect(r.itens).toHaveLength(1);
+    expect(r.total).toBe(37);
+    expect(r.unidadePaginacao).toBe("itens de planejamento");
+    const p = new URL(String(vi.mocked(fetch).mock.calls[0][0])).searchParams;
+    expect(p.get("dataInicio")).toBe("20221231");
+    expect(p.get("dataFim")).toBe("20230101");
+  });
+  it("respeita ano bissexto e o limite de 365 dias da requisição PCA", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    await consultarGov({ fonte: "planejamento", inicio: "2024-02-29", fim: "2024-02-29" });
+    expect(new URL(String(vi.mocked(fetch).mock.calls[0][0])).searchParams.get("dataFim")).toBe("20240301");
+    expect(esquemaFiltrosGov.safeParse({ fonte: "planejamento", inicio: "2024-01-01", fim: "2024-12-31" }).success).toBe(false);
+    expect(esquemaFiltrosGov.safeParse({ fonte: "planejamento", inicio: "2023-01-01", fim: "2023-12-31" }).success).toBe(true);
+  });
+  it("recupera publicações do dia inteiro no Compras sem alterar o limite do legado", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((entrada: string) => {
+      const p = new URL(entrada).searchParams;
+      const completo = p.get("dataPublicacaoPncpFinal") === "2026-11-14";
+      return Promise.resolve(new Response(JSON.stringify({ resultado: completo ? [{ numeroControlePNCP: "12345678000190-1-000005/2026", objetoCompra: "Serviço publicado à noite", orgaoEntidadeCnpj: "12345678000190", anoCompraPncp: 2026, sequencialCompraPncp: 5, dataPublicacaoPncp: "2026-11-13T21:30:39" }] : [], totalRegistros: completo ? 505 : 0, totalPaginas: completo ? 51 : 0 })));
+    }));
+    const r = await consultarGov({ fonte: "compras", inicio: "2026-11-13", fim: "2026-11-13" });
+    expect(r.itens).toHaveLength(1);
+    expect(r.itens[0].publicado).toBe("2026-11-13T21:30:39");
+    expect(r.total).toBe(505);
+  });
   const salvoPlano: OportunidadeGov = { id: "12345678000190-0-000001/2023#22", fonte: "PNCP", tipo: "PLANEJAMENTO", objeto: "Retrato anterior", orgao: "Órgão", cnpj: "12345678000190", uf: null, municipio: null, modalidade: "Serviço", situacao: "Planejado • não é edital aberto", valor: 10, publicado: "2022-12-01", prazo: "2023-01-01", atualizado: "2022-12-01", ano: 2023, url: "https://pncp.gov.br/app/pca/12345678000190/2023/1" };
   it("atualiza item de PCA salvo sem depender da varredura nacional, inclusive fora da primeira página", async () => {
     const fetchMock = vi.fn()
@@ -56,9 +88,9 @@ describe("Central GOV • fontes oficiais", () => {
     expect(url).not.toMatch(/cnpj=|codigoModalidadeContratacao=|CNAE/i);
   });
   it("expande itens de PCA sem perder ano ou identidade do plano", async () => {
-    resposta({ data: [{ idPcaPncp: "12345678000190-0-000001/2027", orgaoEntidadeCnpj: "12345678000190", orgaoEntidadeRazaoSocial: "Órgão", anoPca: 2027, itens: [{ numeroItem: 1, descricaoItem: "Nuvem", valorTotal: 10, dataDesejada: "2027-04-01" }, { numeroItem: 2, descricaoItem: "Pintura", valorTotal: 0 }] }], totalRegistros: 1, totalPaginas: 1 });
+    resposta({ data: [{ idPcaPncp: "12345678000190-0-000001/2027", orgaoEntidadeCnpj: "12345678000190", orgaoEntidadeRazaoSocial: "Órgão", anoPca: 2027, itens: [{ numeroItem: 1, descricaoItem: "Nuvem", valorTotal: 10, dataDesejada: "2027-04-01" }, { numeroItem: 2, descricaoItem: "Pintura", valorTotal: 0 }] }], totalRegistros: 2, totalPaginas: 1 });
     const r = await consultarGov({ fonte: "planejamento", inicio: "2026-11-14", fim: "2026-11-15" });
-    expect(r.unidadePaginacao).toBe("planos");
+    expect(r.unidadePaginacao).toBe("itens de planejamento");
     expect(r.itens).toHaveLength(2);
     expect(r.itens[0].ano).toBe(2027);
     expect(r.itens[0].prazo).toBe("2027-04-01");
@@ -90,6 +122,7 @@ describe("Central GOV • fontes oficiais", () => {
   it("normaliza resultado legado e mantém busca local explícita", async () => {
     resposta({ resultado: [{ id_compra: "12345605000012023", tx_objeto: "Manutenção predial", no_orgao: "Órgão", co_uasg: 123456, dt_data_edital: "2023-01-02", dt_fim_proposta: "2023-01-20", valor_estimado_total: 100 }], totalRegistros: 1, totalPaginas: 1 });
     const r = await consultarGov({ fonte: "pregoes", inicio: "2023-01-01", fim: "2023-01-03" });
+    expect(new URL(String(vi.mocked(fetch).mock.calls[0][0])).searchParams.get("dt_data_edital_final")).toBe("2023-01-03");
     expect(r.itens[0].fonte).toBe("COMPRAS");
     expect(r.itens[0].prazo).toBe("2023-01-20");
     expect(filtrarPaginaGov(r.itens, { busca: "manutencao", minimo: 50 })).toHaveLength(1);
