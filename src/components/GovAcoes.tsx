@@ -1,9 +1,20 @@
 "use client";
 
 import { useActionState } from "react";
-import { analisarGovAction, salvarGovAction, criarAlertaGovAction, removerAlertaGovAction } from "@/app/acoes/gov";
+import { analisarGovAction, salvarGovAction, criarAlertaGovAction, removerAlertaGovAction, controlarColetaGovAction } from "@/app/acoes/gov";
 import type { BuscaGlobalGov } from "@/dominio/gov-catalogo";
 import type { OportunidadeGov } from "@/integracoes/gov";
+
+export function ControlarColetaGov({ id, habilitada }: { id: string; habilitada: boolean }) {
+  const [estado, acao, pendente] = useActionState(controlarColetaGovAction, {});
+  const rotulo = habilitada ? "Pausar coleta" : "Retomar coleta";
+  return <form action={acao}>
+    <input type="hidden" name="id" value={id} />
+    <input type="hidden" name="operacao" value={habilitada ? "pausar" : "retomar"} />
+    <button className="secondary-button" disabled={pendente} aria-label={`${rotulo} ${id}`}>{pendente ? "Atualizando…" : rotulo}</button>
+    <p role={estado.erro ? "alert" : "status"}>{estado.erro ?? estado.ok}</p>
+  </form>;
+}
 
 export function SalvarGov({ dados }: { dados: OportunidadeGov }) {
   const [estado, acao, pendente] = useActionState(salvarGovAction, {});

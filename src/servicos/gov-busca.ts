@@ -58,6 +58,6 @@ export async function analisarGlobalGov(entrada: unknown) {
 export function coberturaGov() {
   return prisma.govColeta.findMany({ orderBy: [{ historica: "asc" }, { id: "asc" }], select: {
     id: true, fonte: true, historica: true, habilitada: true, inicio: true, cobertoAte: true,
-    ultimoSucessoEm: true, ultimoErro: true, paginas: true, registros: true, ciclos: true, falhas: true, proximaEm: true,
+    ultimoSucessoEm: true, ultimoErro: true, paginas: true, registros: true, ciclos: true, falhas: true, proximaEm: true, reservaAte: true,
   } });
 }

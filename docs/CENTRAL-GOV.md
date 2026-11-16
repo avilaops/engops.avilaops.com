@@ -21,6 +21,24 @@ O histórico PCA usa janelas diárias: a consulta mensal de abril/maio de 2023 a
 
 Papéis que podem editar demandas podem salvar/analisar oportunidades. Consulta e revisor apenas leem. Toda gravação e consulta de salvos usa empresa da sessão. Falhas externas aparecem como falhas, não como resultado vazio. Links são oficiais e conteúdo externo é renderizado como texto.
 
+## Controle das coletas
+
+Em `/gov?visao=coleta`, o dono da plataforma pode pausar ou retomar cada fluxo.
+O catálogo é compartilhado por todas as empresas: os controles não são liberados
+apenas pelo papel ADMIN de uma empresa. A autorização é conferida novamente no
+serviço, sem depender da visibilidade dos botões.
+
+A pausa impede novas reservas. Uma página já reservada pode terminar e gravar
+seu resultado; nesse intervalo a tela informa que está pausando. Retomar agenda
+a próxima tentativa para agora e continua do checkpoint salvo. Essas operações
+preservam reservas, cursores, cobertura, contadores, dados e o último erro. O erro
+só é limpo quando uma nova página é processada com sucesso.
+
+Cada alteração efetiva grava a auditoria na mesma transação. Comandos repetidos
+não duplicam o registro nem mudam o agendamento. O botão Atualizar situação
+recarrega os estados sem fazer consulta adicional aos provedores. A pausa e a
+retomada foram testadas com uma página em andamento em PostgreSQL isolado.
+
 Login é centralizado em `auth.avilaops.com`. O provedor gov.br permanece desabilitado sem credenciamento oficial; as APIs públicas não dependem dele. O formulário SGD Integrar Produtos ID exige dados de órgão público. Não há Poder/Esfera comprovadamente aplicável à Ávila Ops comercial; não selecionar dados fictícios. É necessária análise de elegibilidade conforme o [termo oficial](https://www.gov.br/governodigital/pt-br/estrategias-e-governanca-digital/transformacao-digital/ferramentas/autenticacao-gov.br/termo-de-uso-do-servico-de-integracao-com-a-conta-gov.br), além de credenciais.
 
 ## Publicação e verificação
