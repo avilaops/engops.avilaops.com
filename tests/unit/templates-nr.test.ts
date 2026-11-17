@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TEMPLATES_NR, obterTemplateNr } from "@/dominio/templates-nr";
+import { TEMPLATES_NR, filtrarTemplatesNr, obterTemplateNr } from "@/dominio/templates-nr";
 import { gerarPdfDeHtml, renderizarCertificadoHtml } from "@/servicos/renderizador-documentos-sst";
 import { PDFDocument } from "pdf-lib";
 
@@ -21,6 +21,13 @@ describe("templates HTML/CSS das 38 NRs", () => {
   it("resolve códigos de NR em formatos diferentes", () => {
     expect(obterTemplateNr("NR 1").codigo).toBe("NR-01");
     expect(obterTemplateNr("nr-035").codigo).toBe("NR-35");
+  });
+
+  it("filtra a lista por NR, título e situação", () => {
+    expect(filtrarTemplatesNr({ busca: "altura" }).map(item => item.codigo)).toEqual(["NR-35"]);
+    expect(filtrarTemplatesNr({ busca: "06" }).map(item => item.codigo)).toEqual(["NR-06"]);
+    expect(filtrarTemplatesNr({ situacao: "revogada" }).map(item => item.codigo)).toEqual(["NR-02", "NR-27"]);
+    expect(filtrarTemplatesNr({ situacao: "vigente" })).toHaveLength(36);
   });
 
   it("renderiza frente e verso com identidade GRB e cliente sem injetar HTML", () => {
