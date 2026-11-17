@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-const urlImagem = z.string().trim().transform(valor => valor || null).refine(valor => valor === null || valor.startsWith("/") || /^https:\/\//i.test(valor), "Use caminho local ou URL HTTPS.");
+const urlImagem = z.preprocess(
+  valor => valor === null || valor === undefined || String(valor).trim() === "" ? null : String(valor).trim(),
+  z.union([z.null(), z.string().refine(valor => {
+    const interno = valor.startsWith("/") && !valor.startsWith("//");
+    const storage = valor.startsWith("engops/");
+    return (interno || storage) && !valor.includes("\\") && !valor.split("/").includes("..");
+  }, "Use um arquivo interno do sistema.")]),
+);
 
 export const configuracaoSstSchema = z.object({
   nomeExibicao: z.string().trim().min(2).max(120),

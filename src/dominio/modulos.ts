@@ -14,7 +14,7 @@ export function podeAdministrarModulos(dono: boolean): boolean {
 }
 
 export function podeAlterarPessoas(papel: string): boolean {
-  return papel !== "CONSULTA";
+  return papel === "ADMIN" || papel === "GESTOR" || papel === "OPERADOR";
 }
 
 export function alteracoesDeDependencia(modulo: ModuloEngOps, ativo: boolean, ativos: ReadonlyArray<ModuloEngOps> = []): Array<{ modulo: ModuloEngOps; ativo: boolean }> {

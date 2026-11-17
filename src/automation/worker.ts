@@ -3,6 +3,8 @@ import { umCiclo } from "@/automation/core/fila";
 import { entregarEventos } from "@/automation/outbox";
 import "@/automation/workflows";
 import { iniciarColetaGov } from "@/automation/gov-coleta";
+import { gerarAlertasVencimentosSst } from "@/servicos/alertas-sst";
+import { processarFilaEmailSst } from "@/servicos/fila-email-sst";
 
 /**
  * Processador de jobs dentro do próprio processo do Next. Um container só,
@@ -11,6 +13,7 @@ import { iniciarColetaGov } from "@/automation/gov-coleta";
  */
 const INTERVALO_OCIOSO_MS = 3_000;
 const INTERVALO_OUTBOX_MS = 10_000;
+const INTERVALO_ALERTAS_SST_MS = 60 * 60 * 1_000;
 
 let ligado = false;
 
@@ -39,6 +42,12 @@ export function iniciarWorker() {
       setTimeout(outbox, INTERVALO_OUTBOX_MS);
     }
   };
+  const alertasSst = async () => {
+    try { await gerarAlertasVencimentosSst(); await processarFilaEmailSst(); }
+    catch (e) { console.error("[engops] alertas SST falharam", e); }
+    finally { setTimeout(alertasSst, INTERVALO_ALERTAS_SST_MS); }
+  };
   setTimeout(laco, 1_000);
   setTimeout(outbox, 5_000);
+  setTimeout(alertasSst, 15_000);
 }

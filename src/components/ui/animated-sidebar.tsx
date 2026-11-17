@@ -200,6 +200,10 @@ function useAnimatedSidebarPanel() {
   return context;
 }
 
+export function menuButtonTabIndex(disabled: boolean) {
+  return disabled ? -1 : 0;
+}
+
 type SidebarProviderStyle = CSSProperties & {
   "--sidebar-width"?: string;
   "--sidebar-width-icon"?: string;
@@ -1006,7 +1010,7 @@ export function AnimatedSidebarMenuSubButton({
       }
       aria-current={isActive ? "page" : undefined}
       aria-disabled={disabled || undefined}
-      tabIndex={disabled ? -1 : undefined}
+      tabIndex={menuButtonTabIndex(Boolean(disabled))}
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}
       transition={SPRING_PRESS}
@@ -1168,7 +1172,7 @@ export function AnimatedSidebarMenuButton({
       aria-disabled={disabled || undefined}
       aria-label={panel.collapsed ? textLabel : undefined}
       title={panel.collapsed ? textLabel : undefined}
-      tabIndex={disabled ? -1 : undefined}
+      tabIndex={menuButtonTabIndex(Boolean(disabled))}
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}
       transition={SPRING_PRESS}
@@ -1185,6 +1189,7 @@ export function AnimatedSidebarMenuButton({
       data-slot="sidebar-menu-button"
       aria-label={panel.collapsed ? textLabel : undefined}
       title={panel.collapsed ? textLabel : undefined}
+      tabIndex={menuButtonTabIndex(Boolean(disabled))}
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}
       transition={SPRING_PRESS}

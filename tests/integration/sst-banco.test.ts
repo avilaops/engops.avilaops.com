@@ -8,15 +8,16 @@ import { exigirModulo } from "@/servicos/modulos";
 import { intervaloDoMes } from "@/dominio/agenda";
 
 const url = process.env.SST_TEST_DATABASE_URL;
-let empresaA: string; let empresaB: string;
+let empresaA: string; let empresaB: string; let clienteA: string; let clienteB: string;
 
 describe.skipIf(!url)("RH e SST • PostgreSQL isolado", () => {
   beforeAll(async () => {
     if (!/^engops_sst_test_[a-z0-9_]+$/.test(new URL(url!).pathname.slice(1))) throw new Error("Exige banco SST isolado.");
     const [a, b] = await Promise.all(["a", "b"].map(sufixo => prisma.empresa.create({ data: { slug: `sst-${sufixo}`, nome: `Tenant ${sufixo.toUpperCase()}` } })));
     empresaA = a.id; empresaB = b.id;
+    const [ca, cb] = await Promise.all([prisma.cliente.create({ data: { empresaId: empresaA, nome: "Cliente A" } }), prisma.cliente.create({ data: { empresaId: empresaB, nome: "Cliente B" } })]); clienteA = ca.id; clienteB = cb.id;
     await prisma.moduloEmpresa.createMany({ data: [{ empresaId: empresaA, modulo: "RH", ativadoPor: "teste" }, { empresaId: empresaA, modulo: "SST", ativadoPor: "teste" }, { empresaId: empresaB, modulo: "RH", ativadoPor: "teste" }] });
-    await prisma.compromissoAgenda.createMany({ data: [{ empresaId: empresaA, titulo: "Evento A", inicio: new Date("2026-11-10T12:00:00Z"), criadoPor: "teste" }, { empresaId: empresaB, titulo: "Evento B", inicio: new Date("2026-11-11T12:00:00Z"), criadoPor: "teste" }] });
+    await prisma.compromissoAgenda.createMany({ data: [{ empresaId: empresaA, clienteId: clienteA, titulo: "Evento A", inicio: new Date("2026-11-10T12:00:00Z"), criadoPor: "teste" }, { empresaId: empresaB, clienteId: clienteB, titulo: "Evento B", inicio: new Date("2026-11-11T12:00:00Z"), criadoPor: "teste" }] });
   });
   afterAll(async () => { if (url) await (prisma as PrismaClient).$disconnect(); });
 

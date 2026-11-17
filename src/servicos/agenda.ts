@@ -4,12 +4,12 @@ import type { ModuloEngOps } from "@prisma/client";
 
 export type EventoAgenda = { id: string; tipo: "COMPROMISSO" | "TREINAMENTO" | "VENCIMENTO"; titulo: string; inicio: Date };
 
-export async function eventosDaAgenda(empresaId: string, intervalo: Intervalo, modulos: ModuloEngOps[]): Promise<EventoAgenda[]> {
+export async function eventosDaAgenda(empresaId: string, intervalo: Intervalo, modulos: ModuloEngOps[], clienteId?: string): Promise<EventoAgenda[]> {
   const fontes = fontesDaAgenda(modulos);
   const [compromissos, treinamentos, certificados] = await Promise.all([
-    fontes.compromissos ? prisma.compromissoAgenda.findMany({ where: { empresaId, inicio: { gte: intervalo.inicio, lt: intervalo.fim } } }) : [],
-    fontes.sst ? prisma.treinamentoSst.findMany({ where: { empresaId, inicio: { gte: intervalo.inicio, lt: intervalo.fim } } }) : [],
-    fontes.sst ? prisma.certificadoSst.findMany({ where: { empresaId, venceEm: { gte: intervalo.inicio, lt: intervalo.fim } }, include: { participante: { include: { funcionario: true } } } }) : [],
+    fontes.compromissos ? prisma.compromissoAgenda.findMany({ where: { empresaId, ...(clienteId ? { clienteId } : {}), inicio: { gte: intervalo.inicio, lt: intervalo.fim } } }) : [],
+    fontes.sst ? prisma.treinamentoSst.findMany({ where: { empresaId, ...(clienteId ? { clienteId } : {}), inicio: { gte: intervalo.inicio, lt: intervalo.fim } } }) : [],
+    fontes.sst ? prisma.certificadoSst.findMany({ where: { empresaId, ...(clienteId ? { clienteId } : {}), status: "ATIVO", venceEm: { gte: intervalo.inicio, lt: intervalo.fim } }, include: { participante: { include: { funcionario: true } } } }) : [],
   ]);
   return [
     ...compromissos.map((item) => ({ id: item.id, tipo: "COMPROMISSO" as const, titulo: item.titulo, inicio: item.inicio })),

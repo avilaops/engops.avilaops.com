@@ -51,6 +51,18 @@ enum StatusOrdemSst {
   CANCELADA
 }
 
+enum StatusCertificadoSst {
+  ATIVO
+  INVALIDADO
+}
+
+enum StatusEnvioEmailSst {
+  PENDENTE
+  PROCESSANDO
+  ENVIADO
+  FALHOU
+}
+
 model Empresa {
   id            String        @id @default(cuid())
   slug          String        @unique
@@ -90,6 +102,8 @@ model Empresa {
   treinamentosSst           TreinamentoSst[]
   participantesSst          ParticipanteTreinamentoSst[]
   certificadosSst           CertificadoSst[]
+  emissoesCertificadosSst   EmissaoCertificadoSst[]
+  enviosEmailSst            EnvioEmailSst[]
   ordensSst                 OrdemServicoSst[]
   compromissosAgenda        CompromissoAgenda[]
 
@@ -115,21 +129,26 @@ model ModuloEmpresa {
 model SetorRh {
   id           String          @id @default(cuid())
   empresaId    String
+  clienteId    String
   nome         String
   descricao    String?
   ativo        Boolean         @default(true)
   criadoEm     DateTime        @default(now())
   atualizadoEm DateTime        @updatedAt
   empresa      Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  cliente      Cliente         @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
   funcionarios FuncionarioRh[]
 
-  @@unique([empresaId, nome])
+  @@unique([empresaId, clienteId, nome])
+  @@unique([id, empresaId, clienteId])
+  @@index([empresaId, clienteId, ativo])
   @@map("rh_setores")
 }
 
 model CargoRh {
   id           String          @id @default(cuid())
   empresaId    String
+  clienteId    String
   nome         String
   cbo          String?
   descricao    String?
@@ -137,15 +156,19 @@ model CargoRh {
   criadoEm     DateTime        @default(now())
   atualizadoEm DateTime        @updatedAt
   empresa      Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  cliente      Cliente         @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
   funcionarios FuncionarioRh[]
 
-  @@unique([empresaId, nome])
+  @@unique([empresaId, clienteId, nome])
+  @@unique([id, empresaId, clienteId])
+  @@index([empresaId, clienteId, ativo])
   @@map("rh_cargos")
 }
 
 model FuncionarioRh {
   id            String                       @id @default(cuid())
   empresaId     String
+  clienteId     String
   setorId       String
   cargoId       String
   nome          String
@@ -158,14 +181,16 @@ model FuncionarioRh {
   criadoEm      DateTime                     @default(now())
   atualizadoEm  DateTime                     @updatedAt
   empresa       Empresa                      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  setor         SetorRh                      @relation(fields: [setorId], references: [id])
-  cargo         CargoRh                      @relation(fields: [cargoId], references: [id])
+  cliente       Cliente                      @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
+  setor         SetorRh                      @relation(fields: [setorId, empresaId, clienteId], references: [id, empresaId, clienteId])
+  cargo         CargoRh                      @relation(fields: [cargoId, empresaId, clienteId], references: [id, empresaId, clienteId])
   participacoes ParticipanteTreinamentoSst[]
   ordensSst     OrdemServicoSst[]
   compromissos  CompromissoAgenda[]
 
-  @@unique([empresaId, cpf])
-  @@index([empresaId, nome])
+  @@unique([empresaId, clienteId, cpf])
+  @@unique([id, empresaId, clienteId])
+  @@index([empresaId, clienteId, nome])
   @@map("rh_funcionarios")
 }
 
@@ -188,6 +213,7 @@ model NormaSst {
 model TreinamentoSst {
   id              String                       @id @default(cuid())
   empresaId       String
+  clienteId       String
   normaId         String?
   titulo          String
   inicio          DateTime
@@ -199,49 +225,107 @@ model TreinamentoSst {
   criadoEm        DateTime                     @default(now())
   atualizadoEm    DateTime                     @updatedAt
   empresa         Empresa                      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  cliente         Cliente                      @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
   norma           NormaSst?                    @relation(fields: [normaId], references: [id])
   participantes   ParticipanteTreinamentoSst[]
 
-  @@index([empresaId, inicio])
+  @@index([empresaId, clienteId, inicio])
+  @@unique([id, empresaId, clienteId])
   @@map("sst_treinamentos")
 }
 
 model ParticipanteTreinamentoSst {
   id            String          @id @default(cuid())
   empresaId     String
+  clienteId     String
   treinamentoId String
   funcionarioId String
   presente      Boolean         @default(false)
   aprovado      Boolean         @default(false)
   empresa       Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  treinamento   TreinamentoSst  @relation(fields: [treinamentoId], references: [id], onDelete: Cascade)
-  funcionario   FuncionarioRh   @relation(fields: [funcionarioId], references: [id])
+  cliente       Cliente         @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
+  treinamento   TreinamentoSst  @relation(fields: [treinamentoId, empresaId, clienteId], references: [id, empresaId, clienteId], onDelete: Cascade)
+  funcionario   FuncionarioRh   @relation(fields: [funcionarioId, empresaId, clienteId], references: [id, empresaId, clienteId])
   certificado   CertificadoSst?
+  emissoes      EmissaoCertificadoSst[]
 
   @@unique([treinamentoId, funcionarioId])
-  @@index([empresaId])
+  @@unique([id, empresaId, clienteId])
+  @@index([empresaId, clienteId])
   @@map("sst_participantes")
 }
 
 model CertificadoSst {
   id             String                     @id @default(cuid())
   empresaId      String
+  clienteId      String
   participanteId String                     @unique
   numero         String
   emitidoEm      DateTime
   venceEm        DateTime?
   arquivoChave   String?
+  status         StatusCertificadoSst        @default(ATIVO)
+  invalidadoEm   DateTime?
+  motivoInvalidacao String?
+  versao         Int                        @default(1)
   empresa        Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  participante   ParticipanteTreinamentoSst @relation(fields: [participanteId], references: [id], onDelete: Cascade)
+  cliente        Cliente                    @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
+  participante   ParticipanteTreinamentoSst @relation(fields: [participanteId, empresaId, clienteId], references: [id, empresaId, clienteId], onDelete: Cascade)
+  enviosEmail    EnvioEmailSst[]
 
   @@unique([empresaId, numero])
-  @@index([empresaId, venceEm])
+  @@unique([participanteId, empresaId, clienteId])
+  @@index([empresaId, clienteId, venceEm])
   @@map("sst_certificados")
+}
+
+model EnvioEmailSst {
+  id               String              @id @default(cuid())
+  empresaId        String
+  certificadoId    String
+  chave            String              @unique
+  para             String
+  status           StatusEnvioEmailSst @default(PENDENTE)
+  tentativas       Int                 @default(0)
+  proximaTentativa DateTime            @default(now())
+  enviadoEm        DateTime?
+  erro             String?
+  criadoEm         DateTime            @default(now())
+  atualizadoEm     DateTime            @updatedAt
+  empresa          Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  certificado      CertificadoSst      @relation(fields: [certificadoId], references: [id], onDelete: Cascade)
+
+  @@index([status, proximaTentativa])
+  @@index([empresaId, criadoEm])
+  @@map("sst_envios_email")
+}
+
+model EmissaoCertificadoSst {
+  id                String                     @id @default(cuid())
+  empresaId         String
+  clienteId         String
+  participanteId    String
+  numero             String
+  versao             Int
+  emitidoEm          DateTime
+  venceEm            DateTime?
+  arquivoChave       String
+  status             StatusCertificadoSst      @default(ATIVO)
+  invalidadoEm       DateTime?
+  motivoInvalidacao  String?
+  empresa            Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  cliente            Cliente                    @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
+  participante       ParticipanteTreinamentoSst @relation(fields: [participanteId, empresaId, clienteId], references: [id, empresaId, clienteId], onDelete: Cascade)
+
+  @@unique([participanteId, versao])
+  @@index([empresaId, clienteId, emitidoEm])
+  @@map("sst_certificados_emissoes")
 }
 
 model OrdemServicoSst {
   id            String         @id @default(cuid())
   empresaId     String
+  clienteId     String
   funcionarioId String
   numero        String
   emitidaEm     DateTime
@@ -251,15 +335,17 @@ model OrdemServicoSst {
   epis          String?
   status        StatusOrdemSst @default(RASCUNHO)
   empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  funcionario   FuncionarioRh  @relation(fields: [funcionarioId], references: [id])
+  cliente       Cliente        @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
+  funcionario   FuncionarioRh  @relation(fields: [funcionarioId, empresaId, clienteId], references: [id, empresaId, clienteId])
 
-  @@unique([empresaId, numero])
+  @@unique([empresaId, clienteId, numero])
   @@map("sst_ordens_servico")
 }
 
 model CompromissoAgenda {
   id            String         @id @default(cuid())
   empresaId     String
+  clienteId     String
   funcionarioId String?
   titulo        String
   inicio        DateTime
@@ -270,9 +356,10 @@ model CompromissoAgenda {
   criadoEm      DateTime       @default(now())
   atualizadoEm  DateTime       @updatedAt
   empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  cliente       Cliente        @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
   funcionario   FuncionarioRh? @relation(fields: [funcionarioId], references: [id])
 
-  @@index([empresaId, inicio])
+  @@index([empresaId, clienteId, inicio])
   @@map("agenda_compromissos")
 }
 
@@ -432,13 +519,24 @@ model Cliente {
   documento String?
   email     String?
   telefone  String?
+  logoChave String?
   dadosCnpj Json?
   criadoEm  DateTime @default(now())
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id])
   demandas Demanda[]
+  setoresRh SetorRh[]
+  cargosRh CargoRh[]
+  funcionariosRh FuncionarioRh[]
+  treinamentosSst TreinamentoSst[]
+  participantesSst ParticipanteTreinamentoSst[]
+  certificadosSst CertificadoSst[]
+  emissoesCertificadosSst EmissaoCertificadoSst[]
+  ordensSst OrdemServicoSst[]
+  compromissosAgenda CompromissoAgenda[]
 
   @@index([empresaId, nome])
+  @@unique([id, empresaId])
   @@map("clientes")
 }
 
@@ -919,6 +1017,7 @@ model EventoDominio {
 
 model Notificacao {
   id           String    @id @default(cuid())
+  chave        String?   @unique
   empresaId    String
   destinatario String
   titulo       String

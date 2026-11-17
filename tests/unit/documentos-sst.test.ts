@@ -1,5 +1,6 @@
+import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
-import { gerarCertificadoPdf, gerarListaParticipacaoPdf, gerarOrdemServicoPdf, normaPodeEmitirCertificado } from "@/servicos/documentos-sst";
+import { conteudoProgramaticoDaNorma, gerarCertificadoPdf, gerarListaParticipacaoPdf, gerarOrdemServicoPdf, normaPodeEmitirCertificado, nomeArquivoSeguro, quebrarTextoPdf } from "@/servicos/documentos-sst";
 
 describe("documentos SST", () => {
   it("gera certificado PDF válido", async () => {
@@ -21,5 +22,30 @@ describe("documentos SST", () => {
     expect(normaPodeEmitirCertificado("NR-02")).toBe(false);
     expect(normaPodeEmitirCertificado("NR 27")).toBe(false);
     expect(normaPodeEmitirCertificado("NR-35")).toBe(true);
+    expect(normaPodeEmitirCertificado("NR-002")).toBe(false);
+    expect(normaPodeEmitirCertificado("NR 027")).toBe(false);
+  });
+
+  it("pagina listas extensas", async () => {
+    const bytes = await gerarListaParticipacaoPdf({ titulo: "NR-35", empresa: "ARM", realizadoEm: new Date("2026-11-16T12:00:00Z"), participantes: Array.from({ length: 40 }, (_, i) => ({ nome: `Participante ${i + 1}`, presente: true, aprovado: true })) });
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(1);
+  });
+
+  it("pagina ordens com conteúdo extenso e sanitiza nomes", async () => {
+    const longo = "Risco ocupacional detalhado ".repeat(150);
+    const bytes = await gerarOrdemServicoPdf({ numero: "OS-1", funcionario: "Ana", empresa: "ARM", emitidaEm: new Date("2026-11-16T12:00:00Z"), atividades: longo, riscos: longo, medidas: longo, epis: longo });
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(1);
+    expect(nomeArquivoSeguro("OS\r\n2026/001")).toBe("OS-2026-001");
+  });
+
+  it("quebra palavras longas pela largura renderizada", () => {
+    const linhas = quebrarTextoPdf("W".repeat(82), 100, texto => texto.length * 10);
+    expect(linhas.length).toBeGreaterThan(1);
+    expect(linhas.every(linha => linha.length * 10 <= 100)).toBe(true);
+  });
+
+  it("usa uma linha por tópico do conteúdo editado e ignora marcadores vazios", () => {
+    expect(conteudoProgramaticoDaNorma("• Riscos específicos\n- Uso correto de EPI\n\n* Emergências", ["Padrão"])).toEqual(["Riscos específicos", "Uso correto de EPI", "Emergências"]);
+    expect(conteudoProgramaticoDaNorma("  ", ["Padrão"])).toEqual(["Padrão"]);
   });
 });

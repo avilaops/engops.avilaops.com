@@ -22,6 +22,8 @@ describe("módulos por tenant", () => {
     expect(podeAlterarPessoas("CONSULTA")).toBe(false);
     expect(podeAlterarPessoas("ADMIN")).toBe(true);
     expect(podeAlterarPessoas("OPERADOR")).toBe(true);
+    expect(podeAlterarPessoas("GESTOR")).toBe(true);
+    expect(podeAlterarPessoas("REVISOR")).toBe(false);
   });
 
   it("navegação mostra apenas módulos habilitados", () => {
