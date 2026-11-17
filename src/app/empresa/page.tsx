@@ -5,6 +5,8 @@ import { exigirOperador } from "@/lib/tenant";
 import { pode } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { data } from "@/lib/formatos";
+import ConfiguracaoSstForm from "@/components/ConfiguracaoSstForm";
+import { obterConfiguracaoSst } from "@/servicos/configuracao-sst";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +15,10 @@ export default async function Empresa() {
   if (!pode(op.papel, "empresa.administrar")) redirect("/demandas");
   const e = await prisma.empresa.findUnique({ where: { id: op.empresa.id } });
   if (!e) redirect("/empresas");
-  const [demandas, sombraOk] = await Promise.all([
+  const [demandas, sombraOk, configuracaoSst] = await Promise.all([
     prisma.demanda.count({ where: { empresaId: e.id } }),
     prisma.execucaoExterna.count({ where: { demanda: { empresaId: e.id }, modo: "SOMBRA", status: "CONCLUIDA" } }),
+    op.modulos.includes("SST") ? obterConfiguracaoSst(e.id) : Promise.resolve(null),
   ]);
   return (
     <AppShell operador={op} section="empresa">
@@ -35,6 +38,7 @@ export default async function Empresa() {
           <ModoAutomacaoForm modo={e.modoAutomacao} sombraOk={sombraOk} dono={op.dono} />
         </section>
       </div>
+      {op.modulos.includes("SST") ? <section className="panel" style={{ marginTop: 16 }}><div className="panel-title"><h2>Identidade e responsável SST</h2></div><p className="muted" style={{ marginBottom: 16 }}>Defina as marcas e o responsável usados em certificados, listas e ordens de serviço deste tenant.</p><ConfiguracaoSstForm valor={configuracaoSst} /></section> : null}
     </AppShell>
   );
 }

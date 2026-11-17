@@ -17,3 +17,9 @@ export function podeAlterarPessoas(papel: string): boolean {
   return papel !== "CONSULTA";
 }
 
+export function alteracoesDeDependencia(modulo: ModuloEngOps, ativo: boolean, ativos: ReadonlyArray<ModuloEngOps> = []): Array<{ modulo: ModuloEngOps; ativo: boolean }> {
+  if (modulo === "SST" && ativo) return [{ modulo: "RH", ativo: true }];
+  if (modulo === "RH" && !ativo && ativos.includes("SST")) throw new Error("RH não pode ser desativado enquanto SST estiver ativo.");
+  return [];
+}
+

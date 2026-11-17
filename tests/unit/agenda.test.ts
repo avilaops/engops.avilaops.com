@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fontesDaAgenda, intervaloDoMes, pertenceAoIntervalo } from "@/dominio/agenda";
+import { diasDoCalendario, fontesDaAgenda, intervaloDoMes, pertenceAoIntervalo } from "@/dominio/agenda";
 
 describe("agenda", () => {
   it("cria intervalo mensal semiaberto", () => {
@@ -16,5 +16,12 @@ describe("agenda", () => {
   it("consulta fontes conforme os módulos ativos", () => {
     expect(fontesDaAgenda(["RH"])).toEqual({ compromissos: true, sst: false });
     expect(fontesDaAgenda(["SST"])).toEqual({ compromissos: false, sst: true });
+  });
+
+  it("monta semanas completas para o calendário mensal", () => {
+    const dias = diasDoCalendario(2026, 11);
+    expect(dias.length % 7).toBe(0);
+    expect(dias.some(dia => dia.data === "2026-11-01" && dia.doMes)).toBe(true);
+    expect(dias.some(dia => dia.data === "2026-11-30" && dia.doMes)).toBe(true);
   });
 });

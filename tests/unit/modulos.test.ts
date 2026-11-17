@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MODULOS, moduloHabilitado, podeAdministrarModulos, podeAlterarPessoas } from "@/dominio/modulos";
+import { MODULOS, moduloHabilitado, podeAdministrarModulos, podeAlterarPessoas, alteracoesDeDependencia } from "@/dominio/modulos";
 import { navegacaoDoPapel } from "@/lib/navegacao";
 
 describe("módulos por tenant", () => {
@@ -33,5 +33,10 @@ describe("módulos por tenant", () => {
     expect(hrefsSem).not.toContain("/sst");
     expect(hrefsRh).toContain("/rh");
     expect(hrefsRh).not.toContain("/sst");
+  });
+
+  it("mantém RH ativo como base de pessoas quando SST está ativo", () => {
+    expect(alteracoesDeDependencia("SST", true)).toEqual([{ modulo: "RH", ativo: true }]);
+    expect(() => alteracoesDeDependencia("RH", false, ["SST"])).toThrow(/SST/);
   });
 });

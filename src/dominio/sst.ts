@@ -21,3 +21,13 @@ export const treinamentoSchema = z.object({
   validadeMeses: z.preprocess((valor) => valor === "" ? undefined : valor, z.coerce.number().int().positive().optional()),
 });
 
+export const ordemServicoSchema = z.object({
+  funcionarioId: z.string().min(1),
+  numero: z.string().trim().min(4).max(80),
+  emitidaEm: z.coerce.date(),
+  atividades: z.string().trim().min(2),
+  riscos: z.string().trim().min(2),
+  medidas: z.string().trim().min(2),
+  epis: z.string().trim().optional(),
+});
+

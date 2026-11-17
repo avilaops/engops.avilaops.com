@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularVencimento, participantePertenceAoTenant, treinamentoSchema } from "@/dominio/sst";
+import { calcularVencimento, ordemServicoSchema, participantePertenceAoTenant, treinamentoSchema } from "@/dominio/sst";
 
 describe("SST", () => {
   it("calcula a validade do certificado em meses", () => {
@@ -12,5 +12,10 @@ describe("SST", () => {
 
   it("aceita validade vazia como não informada", () => {
     expect(treinamentoSchema.parse({ titulo: "NR 10", inicio: "2026-11-16T10:00", validadeMeses: "" }).validadeMeses).toBeUndefined();
+  });
+
+  it("valida ordem de serviço completa", () => {
+    expect(ordemServicoSchema.parse({ funcionarioId: "func-1", numero: "OS-2026-001", emitidaEm: "2026-11-17", atividades: "Operar máquina", riscos: "Ruído", medidas: "Proteção coletiva", epis: "Protetor auricular" }).numero).toBe("OS-2026-001");
+    expect(() => ordemServicoSchema.parse({ funcionarioId: "func-1", numero: "OS", emitidaEm: "2026-11-17", atividades: "", riscos: "", medidas: "" })).toThrow();
   });
 });
