@@ -1,7 +1,6 @@
 import type { PapelMembro } from "@prisma/client";
 import { pode } from "@/lib/rbac";
 import type { NomeIcone } from "@/components/ui/Icones";
-import type { ModuloEngOps } from "@/dominio/modulos";
 
 /**
  * Mapa de navegação. Um só para a coluna do desktop e para a barra de abas +
@@ -20,12 +19,9 @@ export type Secao =
   | "relatorios"
   | "equipe"
   | "empresa"
-  | "rh"
-  | "sst"
-  | "agenda"
   | "auditoria";
 
-export type ItemNavegacao = { href: string; label: string; section: Secao; modulos?: ModuloEngOps[] };
+export type ItemNavegacao = { href: string; label: string; section: Secao };
 export type GrupoNavegacao = { label: string; items: ItemNavegacao[] };
 
 export const iconeDaSecao: Record<Secao, NomeIcone> = {
@@ -33,7 +29,7 @@ export const iconeDaSecao: Record<Secao, NomeIcone> = {
   demandas: "demandas", "nova-demanda": "adicionar", automacoes: "automacoes",
   notificacoes: "sino", aprovacoes: "aprovacoes", pendencias: "alerta",
   prazos: "prazos", clientes: "pessoas", relatorios: "grafico", equipe: "pessoas",
-  empresa: "empresa", rh: "pessoas", sst: "documento", agenda: "prazos", auditoria: "documento",
+  empresa: "empresa", auditoria: "documento",
 };
 
 export const navegacao: GrupoNavegacao[] = [
@@ -48,14 +44,6 @@ export const navegacao: GrupoNavegacao[] = [
       { href: "/aprovacoes", label: "Aprovações", section: "aprovacoes" },
       { href: "/automacoes", label: "Automações", section: "automacoes" },
       { href: "/notificacoes", label: "Notificações", section: "notificacoes" },
-    ],
-  },
-  {
-    label: "Pessoas e SST",
-    items: [
-      { href: "/rh", label: "Recursos Humanos", section: "rh", modulos: ["RH"] },
-      { href: "/sst", label: "Segurança do Trabalho", section: "sst", modulos: ["SST"] },
-      { href: "/agenda", label: "Agenda", section: "agenda", modulos: ["RH", "SST"] },
     ],
   },
   {
@@ -80,12 +68,11 @@ const ACAO_DA_SECAO: Partial<Record<Secao, Parameters<typeof pode>[1]>> = {
 };
 
 /** O menu deste papel. Esconder não é proteger: cada rota confere de novo. */
-export function navegacaoDoPapel(papel: PapelMembro, modulos: ReadonlyArray<ModuloEngOps> = []): GrupoNavegacao[] {
+export function navegacaoDoPapel(papel: PapelMembro): GrupoNavegacao[] {
   return navegacao
     .map((g) => ({
       ...g,
       items: g.items.filter((i) => {
-        if (i.modulos && !i.modulos.some((modulo) => modulos.includes(modulo))) return false;
         const acao = ACAO_DA_SECAO[i.section];
         return !acao || pode(papel, acao);
       }),

@@ -3,7 +3,6 @@
 import type { PapelMembro } from "@prisma/client";
 import { Bell, Building2, CalendarClock, ChartNoAxesCombined, CircleCheck, ClipboardList, FileClock, Plus, TriangleAlert, UsersRound, Workflow, type LucideIcon } from "lucide-react";
 import { navegacaoDoPapel, type Secao } from "@/lib/navegacao";
-import type { ModuloEngOps } from "@/dominio/modulos";
 import { AnimatedSidebarGroup, AnimatedSidebarGroupContent, AnimatedSidebarGroupLabel, AnimatedSidebarMenu, AnimatedSidebarMenuButton, AnimatedSidebarMenuItem } from "@/components/ui/animated-sidebar";
 
 const icones: Record<Secao, LucideIcon> = {
@@ -11,11 +10,11 @@ const icones: Record<Secao, LucideIcon> = {
   demandas: ClipboardList, "nova-demanda": Plus, automacoes: Workflow,
   notificacoes: Bell, aprovacoes: CircleCheck, pendencias: TriangleAlert,
   prazos: CalendarClock, clientes: UsersRound, relatorios: ChartNoAxesCombined,
-  equipe: UsersRound, empresa: Building2, rh: UsersRound, sst: ClipboardList, agenda: CalendarClock, auditoria: FileClock,
+  equipe: UsersRound, empresa: Building2, auditoria: FileClock,
 };
 
-export default function SideNav({ section, papel, modulos = [] }: { section: Secao; papel: PapelMembro; modulos?: ModuloEngOps[] }) {
-  const grupos = navegacaoDoPapel(papel, modulos);
+export default function SideNav({ section, papel }: { section: Secao; papel: PapelMembro }) {
+  const grupos = navegacaoDoPapel(papel);
   return (
     <nav aria-label="Navegação principal">
       {grupos.map((group) => (

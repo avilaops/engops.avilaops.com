@@ -49,7 +49,6 @@ export default function ClienteForm({ aoCadastrar }: { aoCadastrar?: (cliente: {
         <label className="field"><span>Telefone</span><input name="telefone" inputMode="tel" maxLength={30} value={telefone} disabled={consultando} onChange={(e) => definirTelefone(e.target.value)} /></label>
       </div>
       <label className="field"><span>E-mail</span><input name="email" type="email" value={email} disabled={consultando} onChange={(e) => definirEmail(e.target.value)} /></label>
-      <label className="field"><span>Logo da empresa cliente • opcional</span><input name="logo" type="file" accept="image/png,image/jpeg,image/webp" disabled={consultando || pendente} /></label>
       {estado.erro ? <p className="form-error">{estado.erro}</p> : null}
       {estado.ok ? <p className="form-ok">{estado.ok}</p> : null}
       <button type="submit" className="primary-button" disabled={pendente || consultando || !valido}>{pendente ? "Salvando..." : "Cadastrar contratante"}</button>

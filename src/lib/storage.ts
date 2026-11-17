@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -63,24 +63,10 @@ export async function gravarArquivo(chave: string, buffer: Buffer, mime: string)
     await s3().send(new PutObjectCommand({ Bucket: bucket(), Key: chave, Body: buffer, ContentType: mime }));
     return chave;
   }
-  if (process.env.NODE_ENV === "production") throw new Error("R2 precisa estar completamente configurado em produção.");
   const destino = path.join(raizLocal(), chave);
   await mkdir(path.dirname(destino), { recursive: true });
   await writeFile(destino, buffer);
   return `local:${chave}`;
-}
-
-export async function removerArquivo(chave: string): Promise<void> {
-  if (chave.startsWith("local:")) {
-    const relativo = chave.slice("local:".length);
-    const raiz = raizLocal();
-    const absoluto = path.resolve(raiz, relativo);
-    if (!absoluto.startsWith(`${raiz}${path.sep}`)) throw new Error("Chave local inválida.");
-    await unlink(absoluto).catch(erro => { if ((erro as NodeJS.ErrnoException).code !== "ENOENT") throw erro; });
-    return;
-  }
-  if (!temR2()) throw new Error("R2 não está configurado para remover o arquivo.");
-  await s3().send(new DeleteObjectCommand({ Bucket: bucket(), Key: chave }));
 }
 
 /** URL para baixar. `null` quando o arquivo é local (a rota /api/documentos/[id]/arquivo serve). */
@@ -101,17 +87,4 @@ export function lerArquivoLocal(chave: string) {
   const absoluto = path.resolve(raiz, relativo);
   if (!absoluto.startsWith(raiz)) return null;
   return createReadStream(absoluto);
-}
-
-export async function lerArquivoBytes(chave: string): Promise<Buffer | null> {
-  if (chave.startsWith("local:")) {
-    const stream = lerArquivoLocal(chave);
-    if (!stream) return null;
-    const partes: Buffer[] = [];
-    for await (const parte of stream) partes.push(Buffer.from(parte));
-    return Buffer.concat(partes);
-  }
-  const resposta = await s3().send(new GetObjectCommand({ Bucket: bucket(), Key: chave }));
-  if (!resposta.Body) return null;
-  return Buffer.from(await resposta.Body.transformToByteArray());
 }

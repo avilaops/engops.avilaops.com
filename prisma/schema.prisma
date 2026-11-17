@@ -27,42 +27,6 @@ enum ModoAutomacao {
   REAL
 }
 
-enum ModuloEngOps {
-  RH
-  SST
-}
-
-enum StatusFuncionario {
-  ATIVO
-  AFASTADO
-  DESLIGADO
-}
-
-enum StatusTreinamento {
-  PLANEJADO
-  REALIZADO
-  CANCELADO
-}
-
-enum StatusOrdemSst {
-  RASCUNHO
-  EMITIDA
-  ASSINADA
-  CANCELADA
-}
-
-enum StatusCertificadoSst {
-  ATIVO
-  INVALIDADO
-}
-
-enum StatusEnvioEmailSst {
-  PENDENTE
-  PROCESSANDO
-  ENVIADO
-  FALHOU
-}
-
 model Empresa {
   id            String        @id @default(cuid())
   slug          String        @unique
@@ -75,312 +39,47 @@ model Empresa {
   criadoEm      DateTime      @default(now())
   atualizadoEm  DateTime      @updatedAt
 
-  membros                   Membro[]
-  clientes                  Cliente[]
-  demandas                  Demanda[]
-  documentos                Documento[]
-  artsMultiplas             ArtMultipla[]
-  pendencias                Pendencia[]
-  jobs                      Job[]
-  aprovacoes                Aprovacao[]
-  auditorias                Auditoria[]
-  eventos                   EventoDominio[]
-  notificacoes              Notificacao[]
-  siopCredenciais           SiopCredencial[]
-  siopConsultas             SiopConsulta[]
-  siopRetornos              SiopRetorno[]
-  siopExecucoes             SiopExecucaoOrcamentariaPac[]
-  oportunidadesGov          OportunidadeGovSalva[]
-  regrasGov                 GovRegraAlerta[]
-  avisosGov                 GovAviso[]
+  membros     Membro[]
+  clientes    Cliente[]
+  demandas    Demanda[]
+  documentos  Documento[]
+  artsMultiplas ArtMultipla[]
+  pendencias  Pendencia[]
+  jobs        Job[]
+  aprovacoes  Aprovacao[]
+  auditorias  Auditoria[]
+  eventos     EventoDominio[]
+  notificacoes Notificacao[]
+  siopCredenciais SiopCredencial[]
+  siopConsultas SiopConsulta[]
+  siopRetornos SiopRetorno[]
+  siopExecucoes SiopExecucaoOrcamentariaPac[]
+  oportunidadesGov OportunidadeGovSalva[]
+  regrasGov GovRegraAlerta[]
+  avisosGov GovAviso[]
   configuracoesOperacionais ConfiguracaoOperacional[]
-  modulos                   ModuloEmpresa[]
-  setoresRh                 SetorRh[]
-  cargosRh                  CargoRh[]
-  funcionariosRh            FuncionarioRh[]
-  normasSst                 NormaSst[]
-  treinamentosSst           TreinamentoSst[]
-  participantesSst          ParticipanteTreinamentoSst[]
-  certificadosSst           CertificadoSst[]
-  emissoesCertificadosSst   EmissaoCertificadoSst[]
-  enviosEmailSst            EnvioEmailSst[]
-  ordensSst                 OrdemServicoSst[]
-  compromissosAgenda        CompromissoAgenda[]
 
   @@map("empresas")
 }
 
-model ModuloEmpresa {
-  id           String       @id @default(cuid())
-  empresaId    String
-  modulo       ModuloEngOps
-  ativo        Boolean      @default(true)
-  configuracao Json?
-  ativadoPor   String
-  criadoEm     DateTime     @default(now())
-  atualizadoEm DateTime     @updatedAt
-  empresa      Empresa      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-
-  @@unique([empresaId, modulo])
-  @@index([empresaId, ativo])
-  @@map("modulos_empresa")
-}
-
-model SetorRh {
-  id           String          @id @default(cuid())
-  empresaId    String
-  clienteId    String
-  nome         String
-  descricao    String?
-  ativo        Boolean         @default(true)
-  criadoEm     DateTime        @default(now())
-  atualizadoEm DateTime        @updatedAt
-  empresa      Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente      Cliente         @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  funcionarios FuncionarioRh[]
-
-  @@unique([empresaId, clienteId, nome])
-  @@unique([id, empresaId, clienteId])
-  @@index([empresaId, clienteId, ativo])
-  @@map("rh_setores")
-}
-
-model CargoRh {
-  id           String          @id @default(cuid())
-  empresaId    String
-  clienteId    String
-  nome         String
-  cbo          String?
-  descricao    String?
-  ativo        Boolean         @default(true)
-  criadoEm     DateTime        @default(now())
-  atualizadoEm DateTime        @updatedAt
-  empresa      Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente      Cliente         @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  funcionarios FuncionarioRh[]
-
-  @@unique([empresaId, clienteId, nome])
-  @@unique([id, empresaId, clienteId])
-  @@index([empresaId, clienteId, ativo])
-  @@map("rh_cargos")
-}
-
-model FuncionarioRh {
-  id            String                       @id @default(cuid())
-  empresaId     String
-  clienteId     String
-  setorId       String
-  cargoId       String
-  nome          String
-  cpf           String
-  matricula     String?
-  email         String?
-  telefone      String?
-  admissao      DateTime?
-  status        StatusFuncionario            @default(ATIVO)
-  criadoEm      DateTime                     @default(now())
-  atualizadoEm  DateTime                     @updatedAt
-  empresa       Empresa                      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente       Cliente                      @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  setor         SetorRh                      @relation(fields: [setorId, empresaId, clienteId], references: [id, empresaId, clienteId])
-  cargo         CargoRh                      @relation(fields: [cargoId, empresaId, clienteId], references: [id, empresaId, clienteId])
-  participacoes ParticipanteTreinamentoSst[]
-  ordensSst     OrdemServicoSst[]
-  compromissos  CompromissoAgenda[]
-
-  @@unique([empresaId, clienteId, cpf])
-  @@unique([id, empresaId, clienteId])
-  @@index([empresaId, clienteId, nome])
-  @@map("rh_funcionarios")
-}
-
-model NormaSst {
-  id              String           @id @default(cuid())
-  empresaId       String
-  codigo          String
-  titulo          String
-  textoReferencia String?
-  ativo           Boolean          @default(true)
-  criadoEm        DateTime         @default(now())
-  atualizadoEm    DateTime         @updatedAt
-  empresa         Empresa          @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  treinamentos    TreinamentoSst[]
-
-  @@unique([empresaId, codigo])
-  @@map("sst_normas")
-}
-
-model TreinamentoSst {
-  id              String                       @id @default(cuid())
-  empresaId       String
-  clienteId       String
-  normaId         String?
-  titulo          String
-  inicio          DateTime
-  fim             DateTime?
-  cargaHorariaMin Int?
-  instrutor       String?
-  validadeMeses   Int?
-  status          StatusTreinamento            @default(PLANEJADO)
-  criadoEm        DateTime                     @default(now())
-  atualizadoEm    DateTime                     @updatedAt
-  empresa         Empresa                      @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente         Cliente                      @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  norma           NormaSst?                    @relation(fields: [normaId], references: [id])
-  participantes   ParticipanteTreinamentoSst[]
-
-  @@index([empresaId, clienteId, inicio])
-  @@unique([id, empresaId, clienteId])
-  @@map("sst_treinamentos")
-}
-
-model ParticipanteTreinamentoSst {
-  id            String          @id @default(cuid())
-  empresaId     String
-  clienteId     String
-  treinamentoId String
-  funcionarioId String
-  presente      Boolean         @default(false)
-  aprovado      Boolean         @default(false)
-  empresa       Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente       Cliente         @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  treinamento   TreinamentoSst  @relation(fields: [treinamentoId, empresaId, clienteId], references: [id, empresaId, clienteId], onDelete: Cascade)
-  funcionario   FuncionarioRh   @relation(fields: [funcionarioId, empresaId, clienteId], references: [id, empresaId, clienteId])
-  certificado   CertificadoSst?
-  emissoes      EmissaoCertificadoSst[]
-
-  @@unique([treinamentoId, funcionarioId])
-  @@unique([id, empresaId, clienteId])
-  @@index([empresaId, clienteId])
-  @@map("sst_participantes")
-}
-
-model CertificadoSst {
-  id             String                     @id @default(cuid())
-  empresaId      String
-  clienteId      String
-  participanteId String                     @unique
-  numero         String
-  emitidoEm      DateTime
-  venceEm        DateTime?
-  arquivoChave   String?
-  status         StatusCertificadoSst        @default(ATIVO)
-  invalidadoEm   DateTime?
-  motivoInvalidacao String?
-  versao         Int                        @default(1)
-  empresa        Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente        Cliente                    @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  participante   ParticipanteTreinamentoSst @relation(fields: [participanteId, empresaId, clienteId], references: [id, empresaId, clienteId], onDelete: Cascade)
-  enviosEmail    EnvioEmailSst[]
-
-  @@unique([empresaId, numero])
-  @@unique([participanteId, empresaId, clienteId])
-  @@index([empresaId, clienteId, venceEm])
-  @@map("sst_certificados")
-}
-
-model EnvioEmailSst {
-  id               String              @id @default(cuid())
-  empresaId        String
-  certificadoId    String
-  chave            String              @unique
-  para             String
-  status           StatusEnvioEmailSst @default(PENDENTE)
-  tentativas       Int                 @default(0)
-  proximaTentativa DateTime            @default(now())
-  enviadoEm        DateTime?
-  erro             String?
-  criadoEm         DateTime            @default(now())
-  atualizadoEm     DateTime            @updatedAt
-  empresa          Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  certificado      CertificadoSst      @relation(fields: [certificadoId], references: [id], onDelete: Cascade)
-
-  @@index([status, proximaTentativa])
-  @@index([empresaId, criadoEm])
-  @@map("sst_envios_email")
-}
-
-model EmissaoCertificadoSst {
-  id                String                     @id @default(cuid())
-  empresaId         String
-  clienteId         String
-  participanteId    String
-  numero             String
-  versao             Int
-  emitidoEm          DateTime
-  venceEm            DateTime?
-  arquivoChave       String
-  status             StatusCertificadoSst      @default(ATIVO)
-  invalidadoEm       DateTime?
-  motivoInvalidacao  String?
-  empresa            Empresa                    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente            Cliente                    @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  participante       ParticipanteTreinamentoSst @relation(fields: [participanteId, empresaId, clienteId], references: [id, empresaId, clienteId], onDelete: Cascade)
-
-  @@unique([participanteId, versao])
-  @@index([empresaId, clienteId, emitidoEm])
-  @@map("sst_certificados_emissoes")
-}
-
-model OrdemServicoSst {
-  id            String         @id @default(cuid())
-  empresaId     String
-  clienteId     String
-  funcionarioId String
-  numero        String
-  emitidaEm     DateTime
-  atividades    String
-  riscos        String
-  medidas       String
-  epis          String?
-  status        StatusOrdemSst @default(RASCUNHO)
-  empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente       Cliente        @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  funcionario   FuncionarioRh  @relation(fields: [funcionarioId, empresaId, clienteId], references: [id, empresaId, clienteId])
-
-  @@unique([empresaId, clienteId, numero])
-  @@map("sst_ordens_servico")
-}
-
-model CompromissoAgenda {
-  id            String         @id @default(cuid())
-  empresaId     String
-  clienteId     String
-  funcionarioId String?
-  titulo        String
-  inicio        DateTime
-  fim           DateTime?
-  diaInteiro    Boolean        @default(false)
-  descricao     String?
-  criadoPor     String
-  criadoEm      DateTime       @default(now())
-  atualizadoEm  DateTime       @updatedAt
-  empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente       Cliente        @relation(fields: [clienteId, empresaId], references: [id, empresaId], onDelete: Cascade)
-  funcionario   FuncionarioRh? @relation(fields: [funcionarioId], references: [id])
-
-  @@index([empresaId, clienteId, inicio])
-  @@map("agenda_compromissos")
-}
-
 /// Retrato de uma oportunidade pública salvo para análise na empresa atual.
 model OportunidadeGovSalva {
-  id                   String       @id @default(cuid())
-  empresaId            String
-  fonte                String
-  externoId            String
-  dados                Json
-  notas                String       @default("")
-  situacao             String       @default("SALVA")
-  salvoPor             String
-  criadoEm             DateTime     @default(now())
-  atualizadoEm         DateTime     @updatedAt
-  registroId           String?
-  revisaoVista         Int          @default(0)
-  proximaConferenciaEm DateTime     @default(now())
-  erroConferencia      String?
-  empresa              Empresa      @relation(fields: [empresaId], references: [id])
-  registro             GovRegistro? @relation(fields: [registroId], references: [id], onDelete: SetNull)
+  id         String   @id @default(cuid())
+  empresaId  String
+  fonte      String
+  externoId  String
+  dados      Json
+  notas      String   @default("")
+  situacao   String   @default("SALVA")
+  salvoPor   String
+  criadoEm   DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  registroId String?
+  revisaoVista Int @default(0)
+  proximaConferenciaEm DateTime @default(now())
+  erroConferencia String?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  registro GovRegistro? @relation(fields: [registroId], references: [id], onDelete: SetNull)
 
   @@unique([empresaId, fonte, externoId])
   @@index([empresaId, atualizadoEm])
@@ -392,32 +91,32 @@ model OportunidadeGovSalva {
 
 /// Dados públicos compartilhados; notas, regras e salvos nunca são globais.
 model GovRegistro {
-  id                   String                 @id
-  externoId            String
-  tipo                 String
-  fontes               String[]
-  objeto               String                 @db.Text
-  orgao                String
-  cnpj                 String?
-  uf                   String?
-  regiao               String?
-  categoria            String?
-  modalidade           String?
-  poder                String?
-  esfera               String?
-  valor                Decimal?               @db.Decimal(20, 2)
-  publicado            DateTime?
-  prazo                DateTime?
-  atualizadoFonte      DateTime?
-  dados                Json
-  busca                String                 @db.Text
-  fingerprint          String
-  revisao              Int                    @default(1)
-  primeiroVistoEm      DateTime               @default(now())
-  conferidoEm          DateTime               @default(now())
-  proximaVerificacaoEm DateTime               @default(now())
-  erroConferencia      String?
-  salvas               OportunidadeGovSalva[]
+  id String @id
+  externoId String
+  tipo String
+  fontes String[]
+  objeto String @db.Text
+  orgao String
+  cnpj String?
+  uf String?
+  regiao String?
+  categoria String?
+  modalidade String?
+  poder String?
+  esfera String?
+  valor Decimal? @db.Decimal(20, 2)
+  publicado DateTime?
+  prazo DateTime?
+  atualizadoFonte DateTime?
+  dados Json
+  busca String @db.Text
+  fingerprint String
+  revisao Int @default(1)
+  primeiroVistoEm DateTime @default(now())
+  conferidoEm DateTime @default(now())
+  proximaVerificacaoEm DateTime @default(now())
+  erroConferencia String?
+  salvas OportunidadeGovSalva[]
 
   @@index([publicado, id])
   @@index([prazo])
@@ -432,50 +131,50 @@ model GovRegistro {
 }
 
 model GovColeta {
-  id              String    @id
-  fonte           String
-  historica       Boolean   @default(false)
-  inicio          DateTime
-  cursor          Json
-  habilitada      Boolean   @default(false)
-  proximaEm       DateTime  @default(now())
-  reservaAte      DateTime?
-  reservadoPor    String?
-  paginas         Int       @default(0)
-  registros       Int       @default(0)
-  falhas          Int       @default(0)
-  ultimoErro      String?
+  id String @id
+  fonte String
+  historica Boolean @default(false)
+  inicio DateTime
+  cursor Json
+  habilitada Boolean @default(false)
+  proximaEm DateTime @default(now())
+  reservaAte DateTime?
+  reservadoPor String?
+  paginas Int @default(0)
+  registros Int @default(0)
+  falhas Int @default(0)
+  ultimoErro String?
   ultimoSucessoEm DateTime?
-  cobertoAte      DateTime?
-  ciclos          Int       @default(0)
-  atualizadoEm    DateTime  @updatedAt
+  cobertoAte DateTime?
+  ciclos Int @default(0)
+  atualizadoEm DateTime @updatedAt
 
   @@index([habilitada, proximaEm, reservaAte])
   @@map("gov_coletas")
 }
 
 model GovRegraAlerta {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
   empresaId String
-  email     String
-  nome      String
-  filtros   Json
-  ativa     Boolean  @default(true)
-  criadoEm  DateTime @default(now())
-  empresa   Empresa  @relation(fields: [empresaId], references: [id])
+  email String
+  nome String
+  filtros Json
+  ativa Boolean @default(true)
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
 
   @@index([empresaId, email, ativa])
   @@map("gov_regras_alerta")
 }
 
 model GovAviso {
-  id         String   @id
-  empresaId  String
+  id String @id
+  empresaId String
   registroId String
-  email      String
-  tipo       String
-  criadoEm   DateTime @default(now())
-  empresa    Empresa  @relation(fields: [empresaId], references: [id])
+  email String
+  tipo String
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
 
   @@index([empresaId, criadoEm])
   @@map("gov_avisos")
@@ -493,13 +192,13 @@ enum PapelMembro {
 }
 
 model Membro {
-  id             String      @id @default(cuid())
-  empresaId      String
-  email          String
-  nome           String
-  papel          PapelMembro @default(OPERADOR)
-  ativo          Boolean     @default(true)
-  criadoEm       DateTime    @default(now())
+  id        String      @id @default(cuid())
+  empresaId String
+  email     String
+  nome      String
+  papel     PapelMembro @default(OPERADOR)
+  ativo     Boolean     @default(true)
+  criadoEm  DateTime    @default(now())
   ultimoAcessoEm DateTime?
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id])
@@ -519,24 +218,13 @@ model Cliente {
   documento String?
   email     String?
   telefone  String?
-  logoChave String?
   dadosCnpj Json?
   criadoEm  DateTime @default(now())
 
   empresa  Empresa   @relation(fields: [empresaId], references: [id])
   demandas Demanda[]
-  setoresRh SetorRh[]
-  cargosRh CargoRh[]
-  funcionariosRh FuncionarioRh[]
-  treinamentosSst TreinamentoSst[]
-  participantesSst ParticipanteTreinamentoSst[]
-  certificadosSst CertificadoSst[]
-  emissoesCertificadosSst EmissaoCertificadoSst[]
-  ordensSst OrdemServicoSst[]
-  compromissosAgenda CompromissoAgenda[]
 
   @@index([empresaId, nome])
-  @@unique([id, empresaId])
   @@map("clientes")
 }
 
@@ -594,42 +282,42 @@ model Demanda {
   observacoes   String?
 
   // Imóvel
-  endereco    String?
-  numero      String?
-  complemento String?
-  bairro      String?
-  municipio   String?
-  uf          String?
-  cep         String?
-  matricula   String?
-  cartorio    String?
-  areaM2      Decimal? @db.Decimal(12, 2)
-  tipoImovel  String?
+  endereco     String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  municipio    String?
+  uf           String?
+  cep          String?
+  matricula    String?
+  cartorio     String?
+  areaM2       Decimal?      @db.Decimal(12, 2)
+  tipoImovel   String?
 
   // Proprietário
   proprietarioNome String?
   proprietarioDoc  String?
 
   // Valores e datas do serviço
-  valorAvaliacao Decimal?  @db.Decimal(14, 2)
+  valorAvaliacao Decimal? @db.Decimal(14, 2)
   dataVistoria   DateTime?
 
   arquivadaEm  DateTime?
   entregueEm   DateTime?
   criadoPor    String
-  criadoEm     DateTime  @default(now())
-  atualizadoEm DateTime  @updatedAt
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  empresa       Empresa           @relation(fields: [empresaId], references: [id])
-  cliente       Cliente?          @relation(fields: [clienteId], references: [id])
-  responsavel   Membro?           @relation("responsavel", fields: [responsavelId], references: [id])
-  documentos    Documento[]
+  empresa     Empresa     @relation(fields: [empresaId], references: [id])
+  cliente     Cliente?    @relation(fields: [clienteId], references: [id])
+  responsavel Membro?     @relation("responsavel", fields: [responsavelId], references: [id])
+  documentos  Documento[]
   artsMultiplas ItemArtMultipla[]
-  checklist     ItemChecklist[]
-  pendencias    Pendencia[]
-  jobs          Job[]
-  aprovacoes    Aprovacao[]
-  execucoes     ExecucaoExterna[]
+  checklist   ItemChecklist[]
+  pendencias  Pendencia[]
+  jobs        Job[]
+  aprovacoes  Aprovacao[]
+  execucoes   ExecucaoExterna[]
 
   @@unique([empresaId, codigo])
   @@index([empresaId, status])
@@ -691,8 +379,8 @@ model Documento {
   removidoEm   DateTime?
   criadoEm     DateTime           @default(now())
 
-  empresa     Empresa      @relation(fields: [empresaId], references: [id])
-  demanda     Demanda      @relation(fields: [demandaId], references: [id])
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  demanda Demanda @relation(fields: [demandaId], references: [id])
   artMultipla ArtMultipla?
 
   @@index([demandaId, categoria])
@@ -708,8 +396,8 @@ model ArtMultipla {
   criadoPor   String
   criadoEm    DateTime @default(now())
 
-  empresa   Empresa           @relation(fields: [empresaId], references: [id])
-  documento Documento         @relation(fields: [documentoId], references: [id])
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  documento Documento @relation(fields: [documentoId], references: [id])
   itens     ItemArtMultipla[]
 
   @@unique([empresaId, numero])
@@ -779,18 +467,18 @@ enum OrigemPendencia {
 
 /// Um problema identificado antes (ou durante) a automação. Bloqueia ou avisa.
 model Pendencia {
-  id           String          @id @default(cuid())
-  empresaId    String
-  demandaId    String
-  codigo       String
-  severidade   Severidade
-  titulo       String
-  detalhe      String?
-  campo        String?
-  origem       OrigemPendencia @default(DETECTOR)
-  resolvidaEm  DateTime?
+  id          String          @id @default(cuid())
+  empresaId   String
+  demandaId   String
+  codigo      String
+  severidade  Severidade
+  titulo      String
+  detalhe     String?
+  campo       String?
+  origem      OrigemPendencia @default(DETECTOR)
+  resolvidaEm DateTime?
   resolvidaPor String?
-  criadoEm     DateTime        @default(now())
+  criadoEm    DateTime        @default(now())
 
   empresa Empresa @relation(fields: [empresaId], references: [id])
   demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
@@ -815,21 +503,21 @@ enum StatusJob {
 }
 
 model Job {
-  id                String        @id @default(cuid())
+  id                String     @id @default(cuid())
   empresaId         String
   demandaId         String?
   workflow          String
-  status            StatusJob     @default(QUEUED)
+  status            StatusJob  @default(QUEUED)
   modo              ModoAutomacao @default(SOMBRA)
-  prioridade        Int           @default(5)
+  prioridade        Int        @default(5)
   /// Índice da etapa atual (0-based). Retomar continua daqui, não do zero.
-  etapaAtual        Int           @default(0)
+  etapaAtual        Int        @default(0)
   totalEtapas       Int
-  tentativas        Int           @default(0)
-  maxTentativas     Int           @default(3)
+  tentativas        Int        @default(0)
+  maxTentativas     Int        @default(3)
   /// Uma por intenção: clicar duas vezes em "Preparar SIMIL" acha o mesmo job.
-  chaveIdempotencia String        @unique
-  agendadoPara      DateTime      @default(now())
+  chaveIdempotencia String     @unique
+  agendadoPara      DateTime   @default(now())
   /// Lease do worker. Job com lease vencido e RUNNING é retomado por outro worker.
   travadoAte        DateTime?
   travadoPor        String?
@@ -838,14 +526,14 @@ model Job {
   erroCodigo        String?
   erroMensagem      String?
   /// Estado que passa de etapa em etapa (dados preparados, ids, protocolos).
-  contexto          Json          @default("{}")
+  contexto          Json       @default("{}")
   resultado         Json?
   criadoPor         String
-  criadoEm          DateTime      @default(now())
-  atualizadoEm      DateTime      @updatedAt
+  criadoEm          DateTime   @default(now())
+  atualizadoEm      DateTime   @updatedAt
 
-  empresa   Empresa           @relation(fields: [empresaId], references: [id])
-  demanda   Demanda?          @relation(fields: [demandaId], references: [id])
+  empresa   Empresa      @relation(fields: [empresaId], references: [id])
+  demanda   Demanda?     @relation(fields: [demandaId], references: [id])
   eventos   EventoJob[]
   aprovacao Aprovacao[]
   execucoes ExecucaoExterna[]
@@ -887,17 +575,17 @@ enum SistemaExterno {
 
 /// Parâmetros não secretos de operação manual. Não habilita conectores externos.
 model ConfiguracaoOperacional {
-  id            String         @id @default(cuid())
-  empresaId     String
-  sistema       SistemaExterno
-  portalUrl     String?
-  unidade       String?
-  operacao      String?
-  observacoes   String?
+  id String @id @default(cuid())
+  empresaId String
+  sistema SistemaExterno
+  portalUrl String?
+  unidade String?
+  operacao String?
+  observacoes String?
   atualizadoPor String
-  criadoEm      DateTime       @default(now())
-  atualizadoEm  DateTime       @updatedAt
-  empresa       Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
   @@unique([empresaId, sistema])
   @@map("configuracoes_operacionais")
@@ -915,21 +603,21 @@ enum StatusExecucao {
 /// Cada passagem por SIMIL, RAE ou SIOPI, com evidência. Em modo SOMBRA a
 /// execução para em PREPARADA e o operador compara com o manual.
 model ExecucaoExterna {
-  id           String         @id @default(cuid())
-  demandaId    String
-  jobId        String?
-  sistema      SistemaExterno
-  modo         ModoAutomacao
-  status       StatusExecucao @default(PREPARADA)
+  id          String         @id @default(cuid())
+  demandaId   String
+  jobId       String?
+  sistema     SistemaExterno
+  modo        ModoAutomacao
+  status      StatusExecucao @default(PREPARADA)
   /// Campos preparados, exatamente como iriam para o sistema.
-  dados        Json
-  protocolo    String?
-  evidencias   Json?
-  erroCodigo   String?
+  dados       Json
+  protocolo   String?
+  evidencias  Json?
+  erroCodigo  String?
   erroMensagem String?
   executadoPor String?
-  iniciadoEm   DateTime       @default(now())
-  terminadoEm  DateTime?
+  iniciadoEm  DateTime       @default(now())
+  terminadoEm DateTime?
 
   demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
   job     Job?    @relation(fields: [jobId], references: [id])
@@ -949,19 +637,19 @@ enum StatusAprovacao {
 }
 
 model Aprovacao {
-  id            String          @id @default(cuid())
-  empresaId     String
-  demandaId     String
-  jobId         String?
-  tipo          String
-  status        StatusAprovacao @default(PENDENTE)
+  id           String          @id @default(cuid())
+  empresaId    String
+  demandaId    String
+  jobId        String?
+  tipo         String
+  status       StatusAprovacao @default(PENDENTE)
   /// O que está sendo aprovado, em resumo: campos, contagens, pendências.
-  resumo        Json
+  resumo       Json
   solicitadaPor String
-  solicitadaEm  DateTime        @default(now())
-  decididaPor   String?
-  decididaEm    DateTime?
-  motivo        String?
+  solicitadaEm DateTime        @default(now())
+  decididaPor  String?
+  decididaEm   DateTime?
+  motivo       String?
 
   empresa Empresa @relation(fields: [empresaId], references: [id])
   demanda Demanda @relation(fields: [demandaId], references: [id], onDelete: Cascade)
@@ -1017,7 +705,6 @@ model EventoDominio {
 
 model Notificacao {
   id           String    @id @default(cuid())
-  chave        String?   @unique
   empresaId    String
   destinatario String
   titulo       String

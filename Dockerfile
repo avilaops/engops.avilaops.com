@@ -2,9 +2,8 @@
 # chega pronto em standalone.tgz: o servidor não tem RAM nem disco para buildar.
 # Fluxo completo em deploy/subir.sh e no README.
 FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates chromium fonts-liberation && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PORT=3130 HOSTNAME=0.0.0.0 \
-    CHROMIUM_PATH=/usr/bin/chromium \
     PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 WORKDIR /app
 ADD standalone.tgz /app/

@@ -7,12 +7,11 @@ import { Building2, ChevronsUpDown, LogOut, Search, X } from "lucide-react";
 import SideNav from "@/components/SideNav";
 import { nomeDoPapel } from "@/lib/rbac";
 import type { Secao } from "@/lib/navegacao";
-import type { ModuloEngOps } from "@/dominio/modulos";
 import { AnimatedSidebar, AnimatedSidebarClose, AnimatedSidebarContent, AnimatedSidebarFooter, AnimatedSidebarHeader, AnimatedSidebarMenu, AnimatedSidebarMenuButton, AnimatedSidebarMenuItem, AnimatedSidebarRail, useAnimatedSidebar } from "@/components/ui/animated-sidebar";
 
 export default function WorkspaceSidebar({ section, operador }: {
   section: Secao;
-  operador: { nome: string; papel: PapelMembro; empresa: string; dono: boolean; modulos: ModuloEngOps[] };
+  operador: { nome: string; papel: PapelMembro; empresa: string; dono: boolean };
 }) {
   const { isMobile, setOpenMobile } = useAnimatedSidebar();
   const nome = operador.nome.split(" ")[0];
@@ -49,7 +48,7 @@ export default function WorkspaceSidebar({ section, operador }: {
             }}>Buscar ou ir para…</AnimatedSidebarMenuButton>
           </AnimatedSidebarMenuItem>
         </AnimatedSidebarMenu>
-        <SideNav section={section} papel={operador.papel} modulos={operador.modulos} />
+        <SideNav section={section} papel={operador.papel} />
       </AnimatedSidebarContent>
       <AnimatedSidebarFooter className="p-3">
         <div className="flex min-h-11 items-center gap-3 overflow-hidden">

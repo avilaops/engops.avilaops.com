@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { ModuloEngOps, PapelMembro } from "@prisma/client";
+import type { PapelMembro } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { lerSessaoSSO, urlLoginSSO, type SessaoSSO } from "@/lib/sessao";
 
@@ -24,7 +24,6 @@ export type Operador = {
   empresa: { id: string; slug: string; nome: string; modoAutomacao: "SOMBRA" | "REAL" };
   membroId: string | null;
   papel: PapelMembro;
-  modulos: ModuloEngOps[];
 };
 
 export function ehDonoDaPlataforma(email: string): boolean {
@@ -68,7 +67,6 @@ export async function exigirOperador(): Promise<Operador> {
     : null;
 
   if (membro) {
-    const modulos = await modulosDaEmpresa(membro.empresaId);
     return {
       sessao,
       email,
@@ -77,14 +75,13 @@ export async function exigirOperador(): Promise<Operador> {
       empresa: resumo(membro.empresa),
       membroId: membro.id,
       papel: membro.papel,
-      modulos,
     };
   }
 
   if (dono && empresaId) {
     const empresa = await prisma.empresa.findFirst({ where: { id: empresaId, ativo: true } });
     if (empresa) {
-      return { sessao, email, nome: sessao.nome, dono, empresa: resumo(empresa), membroId: null, papel: "ADMIN", modulos: await modulosDaEmpresa(empresa.id) };
+      return { sessao, email, nome: sessao.nome, dono, empresa: resumo(empresa), membroId: null, papel: "ADMIN" };
     }
   }
 
@@ -95,11 +92,6 @@ export async function exigirOperador(): Promise<Operador> {
     redirect(`/api/empresa/${opcoes[0].id}/entrar?voltar=/demandas`);
   }
   redirect("/empresas");
-}
-
-async function modulosDaEmpresa(empresaId: string): Promise<ModuloEngOps[]> {
-  const registros = await prisma.moduloEmpresa.findMany({ where: { empresaId, ativo: true }, select: { modulo: true } });
-  return registros.map((registro) => registro.modulo);
 }
 
 /** Só para telas que não dependem de empresa (escolha de empresa, cadastro). */
