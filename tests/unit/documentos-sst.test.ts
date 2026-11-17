@@ -1,6 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { conteudoProgramaticoDaNorma, gerarCertificadoPdf, gerarListaParticipacaoPdf, gerarOrdemServicoPdf, normaPodeEmitirCertificado, nomeArquivoSeguro, quebrarTextoPdf } from "@/servicos/documentos-sst";
+import { gerarPdfDeHtml, renderizarListaParticipacaoHtml } from "@/servicos/renderizador-documentos-sst";
 
 describe("documentos SST", () => {
   it("gera certificado PDF válido", async () => {
@@ -12,6 +13,31 @@ describe("documentos SST", () => {
     const bytes = await gerarListaParticipacaoPdf({ titulo: "NR-06 • EPI", empresa: "ARM", realizadoEm: new Date("2026-11-16T12:00:00Z"), participantes: [{ nome: "Ana Souza", presente: true, aprovado: true }] });
     expect(Buffer.from(bytes).subarray(0, 5).toString()).toBe("%PDF-");
   });
+
+  it("renderiza lista de presença HTML com as marcas GRB e A.R.M. e espaço de assinatura", () => {
+    const html = renderizarListaParticipacaoHtml({
+      titulo: "NR-06 • Equipamento de Proteção Individual",
+      empresa: "A.R.M. Exaustores <cliente>",
+      realizadoEm: new Date("2026-11-16T12:00:00Z"),
+      logoGrbUrl: "/grb-logo-completa.png",
+      logoClienteUrl: "/cliente-arm.jpg",
+      participantes: [{ nome: "Ana <script>alert(1)</script>", cpf: "123.456.789-09", presente: true, aprovado: true }],
+    });
+    expect(html).toContain("/grb-logo-completa.png");
+    expect(html).toContain("/cliente-arm.jpg");
+    expect(html).toContain("A.R.M. Exaustores &lt;cliente&gt;");
+    expect(html).toContain("Ana &lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(html).not.toContain("<script>alert(1)</script>");
+    expect(html).toContain("Assinatura");
+    expect(html).toContain("break-inside:avoid");
+  });
+
+  it("gera lista HTML em PDF A4 retrato", async () => {
+    const html = renderizarListaParticipacaoHtml({ titulo: "NR-06", empresa: "A.R.M.", realizadoEm: new Date("2026-11-16T12:00:00Z"), participantes: [] });
+    const bytes = await gerarPdfDeHtml(html, { landscape: false });
+    const pagina = (await PDFDocument.load(bytes)).getPage(0);
+    expect(pagina.getHeight()).toBeGreaterThan(pagina.getWidth());
+  }, 30_000);
 
   it("gera ordem de serviço PDF válida", async () => {
     const bytes = await gerarOrdemServicoPdf({ numero: "OS-2026-0001", funcionario: "Ana Souza", empresa: "ARM", emitidaEm: new Date("2026-11-16T12:00:00Z"), atividades: "Operação", riscos: "Ruído", medidas: "Utilizar EPI", epis: "Protetor auricular" });

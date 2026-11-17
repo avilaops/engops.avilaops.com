@@ -1,5 +1,10 @@
 const TIPOS = new Map([["image/png", "png"], ["image/jpeg", "jpg"], ["image/webp", "webp"]]);
 
+export function logoPadraoCliente(nome: string): string | null {
+  const normalizado = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\./g, "").replace(/[^A-Z0-9]+/g, " ").trim();
+  return /^ARM(?:\s|$)/.test(normalizado) ? "/cliente-arm.jpg" : null;
+}
+
 export function validarLogoCliente(arquivo: { name: string; type: string; size: number }) {
   const extensao = TIPOS.get(arquivo.type);
   if (!extensao || arquivo.size <= 0 || arquivo.size > 3 * 1024 * 1024) throw new Error("Envie uma logo PNG, JPEG ou WebP de até 3 MB.");

@@ -37,6 +37,7 @@ import {
   proximaVersaoCertificado,
 } from "@/servicos/certificados-sst";
 import { chaveEnvioCertificado } from "@/servicos/fila-email-sst";
+import { logoPadraoCliente } from "@/dominio/logo-cliente";
 
 async function contextoSst() {
   const op = await exigirOperador();
@@ -354,7 +355,7 @@ export async function emitirCertificadoAction(form: FormData): Promise<void> {
   const configuracao = await obterConfiguracaoSst(op.empresa.id);
   const logoClienteUrl = participante.cliente?.logoChave
     ? await urlDeDownload(participante.cliente.logoChave, "logo-cliente")
-    : await resolverImagemDocumento(configuracao?.logoClienteUrl);
+    : await resolverImagemDocumento(configuracao?.logoClienteUrl ?? logoPadraoCliente(participante.cliente?.nome ?? ""));
   const html = renderizarCertificadoHtml({
     norma: codigoNr,
     participante: participante.funcionario.nome,

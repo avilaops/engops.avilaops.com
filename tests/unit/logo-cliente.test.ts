@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validarAssinaturaLogo, validarLogoCliente } from "@/dominio/logo-cliente";
+import { logoPadraoCliente, validarAssinaturaLogo, validarLogoCliente } from "@/dominio/logo-cliente";
 
 describe("logo da empresa cliente", () => {
   it("aceita PNG, JPEG e WebP até 3 MB", () => {
@@ -17,5 +17,11 @@ describe("logo da empresa cliente", () => {
     expect(validarAssinaturaLogo(Buffer.from([0xff, 0xd8, 0xff, 0xe0]), "image/jpeg")).toBe(true);
     expect(validarAssinaturaLogo(Buffer.from("RIFF1234WEBP"), "image/webp")).toBe(true);
     expect(validarAssinaturaLogo(Buffer.from("MZ executable"), "image/png")).toBe(false);
+  });
+
+  it("reconhece a marca oficial A.R.M. sem confundir outros clientes", () => {
+    expect(logoPadraoCliente("A.R.M. Exaustores")).toBe("/cliente-arm.jpg");
+    expect(logoPadraoCliente("ARM Solução em Sistema de Exaustão")).toBe("/cliente-arm.jpg");
+    expect(logoPadraoCliente("Armazém Industrial")).toBeNull();
   });
 });

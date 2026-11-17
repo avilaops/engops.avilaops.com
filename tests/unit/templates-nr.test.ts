@@ -7,10 +7,14 @@ describe("templates HTML/CSS das 38 NRs", () => {
   it("possui um tema identificável para cada NR", () => {
     expect(TEMPLATES_NR).toHaveLength(38);
     expect(new Set(TEMPLATES_NR.map(item => item.codigo)).size).toBe(38);
-    expect(new Set(TEMPLATES_NR.map(item => item.acento)).size).toBeGreaterThan(20);
+    expect(new Set(TEMPLATES_NR.map(item => item.acento)).size).toBe(38);
+    expect(new Set(TEMPLATES_NR.map(item => item.grafismo)).size).toBe(38);
+    expect(new Set(TEMPLATES_NR.map(item => item.simbolo)).size).toBe(38);
     for (const template of TEMPLATES_NR) {
       expect(template.titulo).toBeTruthy();
-      expect(template.motivo).toMatch(/^(triangulo|diagonal|faixa|grade)$/);
+      expect(template.familia).toMatch(/^(nr01|nr06|nr11|nr12|nr18|nr20)$/);
+      expect(template.grafismo).toBe(`tema-${template.codigo.toLowerCase()}`);
+      expect(template.acento).toMatch(/^#[0-9a-f]{6}$/i);
     }
   });
 
@@ -41,6 +45,8 @@ describe("templates HTML/CSS das 38 NRs", () => {
     expect(html).toContain("Ana &lt;script&gt;alert(1)&lt;/script&gt;");
     expect(html).not.toContain("<script>alert(1)</script>");
     expect(html.match(/class="pagina/g)).toHaveLength(2);
+    expect(html).toContain("tema-nr-35");
+    expect(html).toContain("data-simbolo=");
   });
 
   it("converte o template HTML/CSS em PDF de duas páginas", async () => {

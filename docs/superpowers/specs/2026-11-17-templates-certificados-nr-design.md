@@ -96,6 +96,18 @@ Uma rota autenticada apresenta o documento HTML em modo de impressão. O PDF é 
 
 A lista usa A4 retrato, cabeçalho configurável, dados do treinamento, conteúdo programático, participantes, CPF, empresa e espaço de assinatura. Paginação ocorre por linhas completas, repetindo cabeçalho e identificação do treinamento.
 
+A lista é renderizada em HTML e CSS pelo mesmo Chromium usado nos certificados. A marca completa GRB aparece como emissora e a marca do cliente aparece em área independente; para o cliente A.R.M., o cadastro deve apontar para o arquivo oficial `cliente-arm.png`. A ausência de uma das imagens preserva o espaço do cabeçalho sem deslocar os demais campos.
+
+## Decisão de implementação • 17/11/2026
+
+• O registro deixa de gerar cores e motivos por fórmula. Cada NR passa a possuir uma definição explícita, com família visual de referência, paleta, grafismo e símbolo temático próprios.
+
+• Os 38 temas permanecem componentes HTML e CSS sobre a mesma estrutura protegida do modelo do Guilherme; não são 38 cópias desconectadas.
+
+• Certificado e lista recebem URLs ou data URLs de logo já resolvidas pelo tenant. Nenhum template consulta diretamente outro tenant.
+
+• A lista deixa de usar o desenho genérico produzido por `pdf-lib` e passa a usar o renderizador HTML compartilhado, em A4 retrato.
+
 ## Fluxo do usuário
 
 1. Cadastrar ou selecionar norma, treinamento e modalidade.
