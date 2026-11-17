@@ -1,11 +1,17 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("motion/react", async (importOriginal) => {
+  const original = await importOriginal<typeof import("motion/react")>();
+  return { ...original, useReducedMotion: () => true };
+});
 import SideNav from "@/components/SideNav";
 import {
   AnimatedSidebar,
   AnimatedSidebarMenuButton,
   AnimatedSidebarProvider,
   AnimatedSidebarTrigger,
+  menuButtonTabIndex,
 } from "@/components/ui/animated-sidebar";
 
 function renderNavigation(papel: "ADMIN" | "OPERADOR", open = true) {
@@ -70,5 +76,21 @@ describe("sidebar animada do EngOps", () => {
     );
     expect(html).toContain('aria-disabled="true"');
     expect(html).toContain('tabindex="-1"');
+  });
+
+  it("mantém a ordem de tabulação estável entre servidor e cliente", () => {
+    expect(menuButtonTabIndex(false)).toBe(0);
+    expect(menuButtonTabIndex(true)).toBe(-1);
+  });
+
+  it("mantém links do menu focáveis quando o cliente reduz movimento", () => {
+    const html = renderToStaticMarkup(
+      <AnimatedSidebarProvider>
+        <AnimatedSidebar>
+          <AnimatedSidebarMenuButton href="/demandas">Demandas</AnimatedSidebarMenuButton>
+        </AnimatedSidebar>
+      </AnimatedSidebarProvider>,
+    );
+    expect(html).toMatch(/href="\/demandas"[^>]*tabindex="0"/);
   });
 });

@@ -10,6 +10,8 @@ import type { EstadoAcao } from "@/app/acoes/demandas";
 import { consultarCnpj, type DadosCnpj } from "@/servicos/cnpjws";
 import { validarCpfCnpj } from "@/dominio/validacao";
 import type { Prisma } from "@prisma/client";
+import { validarAssinaturaLogo, validarLogoCliente } from "@/dominio/logo-cliente";
+import { gravarArquivo, removerArquivo } from "@/lib/storage";
 
 export async function consultarCnpjAction(documento: string): Promise<{ dados?: DadosCnpj; erro?: string }> {
   const op = await exigirOperador();
@@ -31,13 +33,25 @@ export async function criarClienteAction(_: EstadoAcao, form: FormData): Promise
   if (!pode(op.papel, "demanda.criar")) return { erro: "Sem permissão." };
   try {
     const dados = esquema.parse({ nome: form.get("nome"), documento: form.get("documento"), email: form.get("email"), telefone: form.get("telefone") });
+    const logo = form.get("logo"); let logoChave: string | undefined;
+    if (logo && typeof logo === "object" && "arrayBuffer" in logo && "size" in logo && Number(logo.size) > 0) {
+      const arquivo = logo as File; const validado = validarLogoCliente(arquivo); const bytes = Buffer.from(await arquivo.arrayBuffer());
+      if (!validarAssinaturaLogo(bytes, validado.mime)) throw new Error("O conteúdo da logo não corresponde a um PNG, JPEG ou WebP válido.");
+      logoChave = await gravarArquivo(`engops/${op.empresa.id}/clientes/logos/${crypto.randomUUID()}.${validado.extensao}`, bytes, validado.mime);
+    }
     const importado = form.get("importarCnpj");
     const dadosCnpj = importado === dados.documento ? await consultarCnpj(dados.documento) : undefined;
-    const c = await prisma.$transaction(async (tx) => {
-      const criado = await tx.cliente.create({ data: { ...dados, empresaId: op.empresa.id, dadosCnpj: dadosCnpj ? JSON.parse(JSON.stringify(dadosCnpj)) as Prisma.InputJsonValue : undefined } });
-      await auditar({ empresaId: op.empresa.id, usuario: op.email, acao: "cliente.criado", objetoTipo: "Cliente", objetoId: criado.id, depois: dados, metadados: { fonte: dadosCnpj ? "CNPJ.ws" : "manual" } }, tx);
-      return criado;
-    });
+    let c;
+    try {
+      c = await prisma.$transaction(async (tx) => {
+        const criado = await tx.cliente.create({ data: { ...dados, logoChave, empresaId: op.empresa.id, dadosCnpj: dadosCnpj ? JSON.parse(JSON.stringify(dadosCnpj)) as Prisma.InputJsonValue : undefined } });
+        await auditar({ empresaId: op.empresa.id, usuario: op.email, acao: "cliente.criado", objetoTipo: "Cliente", objetoId: criado.id, depois: dados, metadados: { fonte: dadosCnpj ? "CNPJ.ws" : "manual" } }, tx);
+        return criado;
+      });
+    } catch (erro) {
+      if (logoChave) await removerArquivo(logoChave).catch(() => undefined);
+      throw erro;
+    }
     revalidatePath("/clientes");
     return { ok: `${c.nome} cadastrado.`, cliente: { id: c.id, nome: c.nome } };
   } catch (e) {

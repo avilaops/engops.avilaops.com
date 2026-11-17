@@ -3,6 +3,8 @@ import Link from "next/link";
 import { empresasDoUsuario, exigirSessao } from "@/lib/tenant";
 import { Icone } from "@/components/ui/Icones";
 import NovaEmpresaForm from "@/components/NovaEmpresaForm";
+import ModulosEmpresaForm from "@/components/ModulosEmpresaForm";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,10 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
   const { email, dono, sessao } = await exigirSessao();
   const sp = await searchParams;
   const empresas = await empresasDoUsuario(email);
+  const modulos = dono ? await prisma.moduloEmpresa.findMany({
+    where: { empresaId: { in: empresas.map((empresa) => empresa.id) }, ativo: true },
+    select: { empresaId: true, modulo: true },
+  }) : [];
 
   return (
     <main className="main-canvas" style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -40,13 +46,16 @@ export default async function Empresas({ searchParams }: { searchParams: Promise
       {empresas.length ? (
         <div className="ios-list" style={{ marginBottom: 20 }}>
           {empresas.map((e) => (
-            <Link key={e.id} href={`/api/empresa/${e.id}/entrar?voltar=/demandas`} className="ios-row">
-              <span className="ios-row-label">
-                <strong>{e.nome}</strong>
-                <small>{e.slug}{e.modoAutomacao === "SOMBRA" ? " · modo sombra" : ""}</small>
-              </span>
-              <Icone nome="chevron" tamanho={16} className="chevron" />
-            </Link>
+            <div key={e.id} className="ios-row" style={{ display: "block" }}>
+              <Link href={`/api/empresa/${e.id}/entrar?voltar=/demandas`} style={{ display: "flex", alignItems: "center" }}>
+                <span className="ios-row-label">
+                  <strong>{e.nome}</strong>
+                  <small>{e.slug}{e.modoAutomacao === "SOMBRA" ? " • modo sombra" : ""}</small>
+                </span>
+                <Icone nome="chevron" tamanho={16} className="chevron" />
+              </Link>
+              {dono ? <ModulosEmpresaForm empresaId={e.id} ativos={modulos.filter((modulo) => modulo.empresaId === e.id).map((modulo) => modulo.modulo)} /> : null}
+            </div>
           ))}
         </div>
       ) : null}
