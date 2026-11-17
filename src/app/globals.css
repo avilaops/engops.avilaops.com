@@ -266,6 +266,26 @@ a.demand-row:hover { background: var(--hover-bg); }
 .search { height: 38px; padding: 0 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--input-bg); min-width: 260px; }
 .search:focus { outline: 2px solid var(--accent-line); outline-offset: 0; }
 
+/* ---------- Modelos SST em lista ---------- */
+.template-filters { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(190px, 260px) minmax(150px, 190px) auto; gap: 8px; margin-bottom: 14px; }
+.template-filters select, .template-search { height: 40px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.template-filters select { padding: 0 12px; }
+.template-search { display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--subtle-text); }
+.template-search input { width: 100%; border: 0; outline: 0; background: transparent; }
+.template-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+.template-row { display: grid; grid-template-columns: 130px minmax(240px, 1.8fr) minmax(170px, 1fr) 155px 230px; gap: 14px; align-items: center; min-height: 78px; padding: 12px 16px; border-top: 1px solid var(--line-soft); border-left: 4px solid var(--template-accent, transparent); }
+.template-row:first-child { border-top: 0; }
+.template-head { min-height: 42px; border-left: 0; background: var(--surface-soft); color: var(--subtle-text); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.template-code { display: flex; align-items: center; gap: 10px; }
+.template-code > span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: color-mix(in srgb, var(--template-accent) 12%, var(--surface)); color: var(--template-accent); font-size: .68rem; font-weight: 800; }
+.template-code strong { font-family: var(--mono); font-size: .86rem; }
+.template-title { min-width: 0; }
+.template-title strong { display: block; font-weight: 600; }
+.template-title small { display: block; margin-top: 4px; color: var(--subtle-text); }
+.template-client { color: var(--muted); font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.template-actions { display: flex; align-items: center; gap: 7px; justify-content: flex-end; }
+.template-actions .muted { font-size: .8rem; }
+
 /* ---------- Formulários ---------- */
 .form { display: flex; flex-direction: column; gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
@@ -443,6 +463,12 @@ kbd { font-family: var(--mono); font-size: 0.7rem; border: 1px solid var(--line)
   .field input, .field select, .field textarea, .search { height: 48px; font-size: 16px; }
   .field-grid, .field-grid-3 { grid-template-columns: 1fr; }
   .grid-2, .grid-3, .grid-main { grid-template-columns: 1fr; }
+  .template-filters { grid-template-columns: 1fr; }
+  .template-filters select, .template-search { height: 48px; font-size: 16px; }
+  .template-row { grid-template-columns: 86px 1fr; gap: 8px 12px; padding: 14px; }
+  .template-head { display: none; }
+  .template-client { grid-column: 2; }
+  .template-actions { grid-column: 1 / -1; justify-content: flex-start; padding-top: 4px; flex-wrap: wrap; }
   .kv { grid-template-columns: 1fr; gap: 2px; }
   .kv dt { margin-top: 8px; }
   .search { min-width: 0; width: 100%; }

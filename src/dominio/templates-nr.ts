@@ -59,3 +59,16 @@ export function obterTemplateNr(codigo: string): TemplateNr {
   if (!template) throw new Error("Template de NR não encontrado.");
   return template;
 }
+
+export function filtrarTemplatesNr(filtros: { busca?: string; situacao?: "vigente" | "revogada" }): TemplateNr[] {
+  const busca = (filtros.busca ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return TEMPLATES_NR.filter(template => {
+    const numero = Number(template.codigo.replace(/\D/g, ""));
+    const vigente = numero !== 2 && numero !== 27;
+    if (filtros.situacao === "vigente" && !vigente) return false;
+    if (filtros.situacao === "revogada" && vigente) return false;
+    if (!busca) return true;
+    const pesquisavel = `${template.codigo} ${numero} ${template.titulo} ${template.simbolo}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return pesquisavel.includes(busca);
+  });
+}
