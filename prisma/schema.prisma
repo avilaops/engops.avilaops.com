@@ -118,6 +118,8 @@ model GovRegistro {
   salvas OportunidadeGovSalva[]
 
   @@index([publicado, id])
+  @@index([publicado(sort: Desc), id(sort: Desc)], map: "gov_registros_ordenacao_global_idx")
+  @@index([tipo, valor])
   @@index([prazo])
   @@index([uf, publicado])
   @@index([cnpj, publicado])

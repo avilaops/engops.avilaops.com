@@ -56,9 +56,27 @@ describe.skipIf(!url)("GOV • PostgreSQL real, busca global, coleta e isolament
     const pagina = await buscarGlobalGov({ busca: "manutencao", pagina: 2 });
     expect(pagina.total).toBe(34); expect(pagina.itens).toHaveLength(4);
     expect(pagina.totais[0].valor?.toString()).toBe("3400");
-    const grupos = await analisarGlobalGov({});
+    const grupos = (await analisarGlobalGov({})).grupos;
     expect(grupos.orgaos[0].quantidade).toBe(35n);
     expect(grupos.orgaos[0].valor?.toString()).toBe("3400");
+  }, 120000);
+  it("limita cada dimensão a vinte grupos e preserva filtros, nulos e valores por etapa", async () => {
+    for (let n = 1; n <= 25; n++) await gravar(item(n, { orgao: `Órgão ${n}`, valor: n, categoria: n === 1 ? "Não informada pela fonte" : null }));
+    await gravar(item(26, { tipo: "PLANEJAMENTO", id: "12345678000190-0-000001/2026#1", orgao: "Órgão 25", valor: 9999 }));
+    const resumo = await analisarGlobalGov({ uf: "SP", busca: "manutencao" });
+    const grupos = resumo.grupos;
+    expect(grupos.orgaos).toHaveLength(20);
+    expect(grupos.orgaos[0]).toMatchObject({ grupo: "Órgão 25", quantidade: 2n });
+    expect(grupos.regioes[0].quantidade).toBe(26n);
+    expect(grupos.regioes[0].valor?.toString()).toBe("325");
+    expect(grupos.categorias).toHaveLength(1);
+    expect(grupos.categorias[0].quantidade).toBe(26n);
+    const apenasContratos = await analisarGlobalGov({ tipo: "CONTRATACAO" });
+    expect(apenasContratos.grupos.regioes[0].quantidade).toBe(25n);
+    expect((await analisarGlobalGov({ uf: "RJ" })).grupos.orgaos).toEqual([]);
+    expect(resumo.total).toBe(26);
+    expect(resumo.totais.find(t => t.tipo === "CONTRATACAO")?.valor?.toString()).toBe("325");
+    expect(resumo.totais.find(t => t.tipo === "PLANEJAMENTO")?.valor?.toString()).toBe("9999");
   }, 120000);
   it("preserva nota privada, atualiza salvos e notifica alteração uma única vez", async () => {
     await gravar(item(1));
