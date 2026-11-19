@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img "Avila Ops" [ref=e5]
+        - heading "Avila Ops" [level=1] [ref=e6]
+        - paragraph [ref=e7]: Entrar em EngOps
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: E-mail ou CPF
+          - textbox "E-mail ou CPF" [ref=e12]
+        - generic [ref=e13]:
+          - generic [ref=e14]: Senha
+          - generic [ref=e15]:
+            - textbox "Senha" [ref=e16]
+            - button "Mostrar senha" [ref=e17]
+        - button "Entrar" [ref=e21]
+      - paragraph [ref=e22]: Esqueceu a senha? Fale com a equipe Avila Ops — enviamos um link de recuperação.
+  - alert [ref=e23]
